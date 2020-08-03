@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "866040280429",
+    "firebase_url": "https://flutter-farm-inventory.firebaseio.com",
+    "project_id": "flutter-farm-inventory",
+    "storage_bucket": "flutter-farm-inventory.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:866040280429:android:0d4b6914d8cb02e28a5664",
+        "android_client_info": {
+          "package_name": "com.gmail.korex006.flutter_farm_inventory"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "866040280429-59k1fr6onhq4q6qfug12s9pctnbhte9k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZdpFZTdGG5tpiJlgQWzj-R_LSQNDe2LE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "866040280429-59k1fr6onhq4q6qfug12s9pctnbhte9k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
