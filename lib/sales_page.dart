@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_farm_inventory/main.dart';
+
+import 'home_page.dart';
 
 class SalesPage extends StatelessWidget {
   @override

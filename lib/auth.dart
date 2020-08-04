@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 abstract class BaseAuth {
-  Stream<String> get onAuthStateChanged;
+  Stream<FirebaseUser> get onAuthStateChanged;
 
   Future<String> signInWithEmailAndPassword(String email, String passord);
 
@@ -21,14 +22,13 @@ abstract class BaseAuth {
   Future<FirebaseUser> get currentUser;
 }
 
-class AuthFireBase implements BaseAuth {
+class AuthFireBase extends ChangeNotifier implements BaseAuth {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   @override
-  Stream<String> get onAuthStateChanged {
-    return _firebaseAuth.onAuthStateChanged
-        .map((FirebaseUser user) => user?.uid);
+  Stream<FirebaseUser> get onAuthStateChanged {
+    return _firebaseAuth.onAuthStateChanged;
   }
 
   @override

@@ -1,7 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_farm_inventory/auth.dart';
-import 'package:flutter_farm_inventory/main.dart';
+
+import 'home_page.dart';
 
 BaseAuth _baseAuth = AuthFireBase();
 
@@ -97,21 +98,27 @@ class _LoginPageState extends State<LoginPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: <Widget>[
-                            _buildTextField(
+                            CustomTextField(
+                                icon: Icon(Icons.email),
                                 label: "Email",
                                 validator: emailValidator,
                                 onSaved: (val) => _email = val,
                                 obscureText: false),
-                            _buildTextField(
+                            CustomTextField(
+                                icon: Icon(Icons.lock),
                                 label: "Password",
                                 validator: (val) => val.length < 6
                                     ? "Password too short"
                                     : null,
                                 onSaved: (val) => _password = val,
                                 obscureText: true),
-                            RaisedButton(
-                              color: Colors.lightBlue[300],
-                              child: Text("Log in"),
+                            RaisedButton.icon(
+                              icon: Icon(
+                                Icons.person_pin,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              color: Colors.tealAccent,
+                              label: Text("Log in"),
                               onPressed: () {
                                 _submit(formKey, performLogin);
                               },
@@ -252,39 +259,48 @@ class _SignUpPageState extends State<SignUpPage> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: <Widget>[
-                              _buildTextField(
+                              CustomTextField(
+                                  icon: Icon(Icons.person),
                                   label: "Full Name",
-                                  validator: (val) => val.isEmpty
+                                  validator: (val) =>
+                                  val.isEmpty
                                       ? 'Name Cannot be Empty'
                                       : null,
                                   onSaved: (val) => _fullName = val,
                                   obscureText: false),
-                              _buildTextField(
+                              CustomTextField(
+                                  icon: Icon(Icons.email),
                                   label: "Email",
                                   validator: emailValidator,
                                   onSaved: (val) => _email = val,
                                   obscureText: false),
-                              _buildTextField(
+                              CustomTextField(
+                                  icon: Icon(Icons.lock),
                                   label: "Password",
-                                  validator: (val) => val.length < 6
+                                  validator: (val) =>
+                                  val.length < 6
                                       ? "Password too short"
                                       : null,
                                   onSaved: (val) => _password = val,
                                   obscureText: true,
                                   textController: _passwordTextController),
-                              _buildTextField(
+                              CustomTextField(
+                                  icon: Icon(Icons.lock_outline),
                                   label: "Confirm Password",
                                   obscureText: true,
                                   validator: (val) =>
-                                      val != _passwordTextController.text
-                                          ? "Passwords do not match"
-                                          : null),
-                              RaisedButton(
+                                  val != _passwordTextController.text
+                                      ? "Passwords do not match"
+                                      : null),
+                              RaisedButton.icon(
                                 onPressed: () {
                                   _submit(formKey, performSignUp);
                                 },
-                                color: Colors.lightBlue[300],
-                                child: Text("Create Account"),
+                                icon: Icon(Icons.person_add, color: Theme
+                                    .of(context)
+                                    .primaryColor,),
+                                color: Colors.tealAccent,
+                                label: Text("Create Account"),
                               )
                             ],
                           )),
@@ -404,27 +420,113 @@ Widget _buildHeadingAndLogo({String heading}) {
     ],
   );
 }
+//
+//Widget _buildTextField(
+//    {String label,
+//    FormFieldValidator<String> validator,
+//    FormFieldSetter<String> onSaved,
+//    bool obscureText,
+//    TextEditingController textController}) {
+//  double fontSize = 20;
+//
+//  return Container(
+//      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+//      child: Theme(
+//        data: ThemeData(primarySwatch: Colors.teal),
+//        child: TextFormField(
+//          obscureText: obscureText,
+//          controller: textController,
+//          validator: validator,
+//          //Todo autofocus: true
+//          onSaved: onSaved,
+//          style: TextStyle(fontSize: fontSize),
+//          decoration: InputDecoration(
+//              hintStyle:
+//                  TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
+//              labelText: label,
+//              enabledBorder: OutlineInputBorder(
+//                  borderRadius: BorderRadius.circular(30),
+//                  borderSide: BorderSide(
+////              color: Theme.of(context).primaryColor,
+//                    width: 2,
+//                  )),
+//              border: OutlineInputBorder(
+//                borderRadius: BorderRadius.circular(30),
+//                borderSide: BorderSide(
+////              color: Theme.of(context).primaryColor,
+//                  width: 3,
+//                ),
+//              ),
+//              prefixIcon: Padding(
+//                padding: EdgeInsets.only(left: 30, right: 10),
+//                child: IconTheme(
+////      data: IconThemeData(color: Theme.of(context).primaryColor),
+//                  child: icon,
+//                ),
+//              )),
+//        ),
+//      ));
+//}
 
-Widget _buildTextField(
-    {String label,
-    Function validator,
-    Function onSaved,
-    bool obscureText,
-    TextEditingController textController}) {
-  return Padding(
-    padding: const EdgeInsets.all(8.0),
-    child: Theme(
-      data: ThemeData(primarySwatch: Colors.teal),
-      child: TextFormField(
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(),
-        ),
-        obscureText: obscureText,
-        controller: textController,
-        validator: validator,
-        onSaved: onSaved,
-      ),
-    ),
-  );
+class CustomTextField extends StatelessWidget {
+  final FormFieldValidator<String> validator;
+  final FormFieldSetter<String> onSaved;
+  final String label;
+  final Icon icon;
+  final bool obscureText;
+  final TextEditingController textController;
+
+  final double fontSize = 20;
+
+  CustomTextField({this.icon,
+    this.label,
+    this.obscureText = false,
+    this.validator,
+    this.onSaved,
+    this.textController});
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        padding: const EdgeInsets.all(6.0),
+        child: TextFormField(
+          obscureText: obscureText,
+          controller: textController,
+          validator: validator,
+          autofocus: true,
+          onSaved: onSaved,
+          style: TextStyle(fontSize: fontSize),
+          decoration: InputDecoration(
+              hintStyle:
+              TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
+              labelText: label,
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide(
+                    color: Theme
+                        .of(context)
+                        .primaryColor,
+                    width: 2,
+                  )),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+                borderSide: BorderSide(
+                  color: Theme
+                      .of(context)
+                      .primaryColor,
+                  width: 3,
+                ),
+              ),
+              prefixIcon: Padding(
+                padding: EdgeInsets.only(left: 30, right: 10),
+                child: IconTheme(
+                  data: IconThemeData(color: Theme
+                      .of(context)
+                      .primaryColor),
+                  child: icon,
+                ),
+              )),
+        ));
+  }
 }
