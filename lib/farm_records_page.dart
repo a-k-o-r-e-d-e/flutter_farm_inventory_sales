@@ -169,91 +169,93 @@ class ProductHistory extends StatelessWidget {
               ),
             ],
           ),
-          StreamBuilder(
-              stream: Firestore.instance
-                  .collection("farm_records")
-                  .where("product", isEqualTo: productName)
-                  .orderBy("dateTime", descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return Center(
-                    child: Column(
-                      children: <Widget>[
-                        CircularProgressIndicator(),
-                        Padding(padding: const EdgeInsets.only(top: 10.0)),
-                        Text("Loading...")
-                      ],
+          Expanded(
+            child: StreamBuilder(
+                stream: Firestore.instance
+                    .collection("farm_records")
+                    .where("product", isEqualTo: productName)
+                    .orderBy("dateTime", descending: true)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return Center(
+                      child: Column(
+                        children: <Widget>[
+                          CircularProgressIndicator(),
+                          Padding(padding: const EdgeInsets.only(top: 10.0)),
+                          Text("Loading...")
+                        ],
 //                              ),
-                    ),
-                  );
-                }
+                      ),
+                    );
+                  }
 
-                return ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: snapshot.data.documents.length,
-                    itemBuilder: (BuildContext buildContext, int index) {
-                      DocumentSnapshot documentSnapshot =
-                          snapshot.data.documents[index];
-                      Timestamp dateStamp = documentSnapshot['dateTime'];
-//                                print(dateStamp);
-                      DateTime date = dateStamp.toDate();
-                      String formattedDate =
-                          DateFormat('dd-MMM-yy').format(date);
+                  return ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: snapshot.data.documents.length,
+                      itemBuilder: (BuildContext buildContext, int index) {
+                        DocumentSnapshot documentSnapshot =
+                            snapshot.data.documents[index];
+                        Timestamp dateStamp = documentSnapshot['dateTime'];
+                        DateTime date = dateStamp.toDate();
+                        String formattedDate =
+                            DateFormat('dd-MMM-yy').format(date);
 
-                      String price = documentSnapshot['price'] != null
-                          ? documentSnapshot['price'].toString()
-                          : "-";
+                        String price = documentSnapshot['price'] != null
+                            ? documentSnapshot['price'].toString()
+                            : "-";
 
-                      Color quantityColor = documentSnapshot['action'] == 'sale'
-                          ? Colors.red
-                          : Colors.green;
+                        Color quantityColor =
+                            documentSnapshot['action'] == 'sale'
+                                ? Colors.red
+                                : Colors.green;
 
-                      print(documentSnapshot['price'] == null);
+                        print(documentSnapshot['price'] == null);
 
-                      return Card(
-                        elevation: 1,
-                        margin: EdgeInsets.symmetric(vertical: 12.0),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 18.0),
-                          child: Row(
-                            children: <Widget>[
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  "${index + 1}",
-                                  textAlign: TextAlign.center,
+                        return Card(
+                          elevation: 1,
+                          margin: EdgeInsets.symmetric(vertical: 6.0),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 15.0),
+                            child: Row(
+                              children: <Widget>[
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    "${index + 1}",
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: Text(formattedDate),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: Text(documentSnapshot['action']),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  documentSnapshot['quantity'].toString(),
-                                  style: TextStyle(color: quantityColor),
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(formattedDate),
                                 ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Container(
-                                    child: Text(
-                                  price,
-                                  textAlign: TextAlign.center,
-                                )),
-                              )
-                            ],
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(documentSnapshot['action']),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    documentSnapshot['quantity'].toString(),
+                                    style: TextStyle(color: quantityColor),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Container(
+                                      child: Text(
+                                    price,
+                                    textAlign: TextAlign.center,
+                                  )),
+                                )
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    });
-              })
+                        );
+                      });
+                }),
+          )
         ],
       ),
     );

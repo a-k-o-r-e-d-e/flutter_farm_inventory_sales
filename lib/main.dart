@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
       create: (context) => AuthFireBase(),
       child: MaterialApp(
         title: 'Flutter Demo',
-        theme: ThemeData.light().copyWith(primaryColor: Colors.teal),
+        theme: ThemeData(primarySwatch: Colors.teal),
         home: WelcomePage(),
       ),
     );
