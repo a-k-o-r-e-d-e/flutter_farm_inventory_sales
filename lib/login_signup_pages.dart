@@ -241,6 +241,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        color: Colors.white,
         child: Center(
           child: SingleChildScrollView(
             child: Column(
@@ -419,6 +420,53 @@ Widget _buildHeadingAndLogo({String heading}) {
     ],
   );
 }
+//
+//Widget _buildTextField(
+//    {String label,
+//    FormFieldValidator<String> validator,
+//    FormFieldSetter<String> onSaved,
+//    bool obscureText,
+//    TextEditingController textController}) {
+//  double fontSize = 20;
+//
+//  return Container(
+//      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+//      child: Theme(
+//        data: ThemeData(primarySwatch: Colors.teal),
+//        child: TextFormField(
+//          obscureText: obscureText,
+//          controller: textController,
+//          validator: validator,
+//          //Todo autofocus: true
+//          onSaved: onSaved,
+//          style: TextStyle(fontSize: fontSize),
+//          decoration: InputDecoration(
+//              hintStyle:
+//                  TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
+//              labelText: label,
+//              enabledBorder: OutlineInputBorder(
+//                  borderRadius: BorderRadius.circular(30),
+//                  borderSide: BorderSide(
+////              color: Theme.of(context).primaryColor,
+//                    width: 2,
+//                  )),
+//              border: OutlineInputBorder(
+//                borderRadius: BorderRadius.circular(30),
+//                borderSide: BorderSide(
+////              color: Theme.of(context).primaryColor,
+//                  width: 3,
+//                ),
+//              ),
+//              prefixIcon: Padding(
+//                padding: EdgeInsets.only(left: 30, right: 10),
+//                child: IconTheme(
+////      data: IconThemeData(color: Theme.of(context).primaryColor),
+//                  child: icon,
+//                ),
+//              )),
+//        ),
+//      ));
+//}
 
 class CustomTextField extends StatelessWidget {
   final FormFieldValidator<String> validator;
@@ -428,25 +476,25 @@ class CustomTextField extends StatelessWidget {
   final bool obscureText;
   final TextEditingController textController;
 
-  final double fontSize = 13.5;
+  final double fontSize = 20;
 
-  CustomTextField(
-      {this.icon,
-      this.label,
-      this.obscureText = false,
-      this.validator,
-      this.onSaved,
-      this.textController});
+  CustomTextField({this.icon,
+    this.label,
+    this.obscureText = false,
+    this.validator,
+    this.onSaved,
+    this.textController});
+
 
   @override
   Widget build(BuildContext context) {
     return Container(
-        padding: const EdgeInsets.all(5.0),
+        padding: const EdgeInsets.all(6.0),
         child: TextFormField(
           obscureText: obscureText,
           controller: textController,
           validator: validator,
-//          autofocus: true,
+          autofocus: true,
           onSaved: onSaved,
           style: TextStyle(fontSize: fontSize),
           decoration: InputDecoration(

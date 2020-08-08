@@ -8,6 +8,7 @@ import 'auth.dart';
 import 'drawer_util.dart';
 import 'farm_records_page.dart';
 import 'login_signup_pages.dart';
+import 'sales_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -28,7 +29,7 @@ class _HomePageState extends State<HomePage> {
             child: Card(
               elevation: 8,
               child: Container(
-                height: 260,
+                height: 200,
                 child: StreamBuilder(
                     stream: Firestore.instance
                         .collection("farm_records")
@@ -58,142 +59,58 @@ class _HomePageState extends State<HomePage> {
                         scrollDirection: Axis.horizontal,
                         children: <Widget>[
                           Container(
-                            color: Colors.teal[100],
-                            width: 340,
-                            child: Column(
-                              children: <Widget>[
-                                Padding(
-                                  padding: const EdgeInsets.all(3.5),
-                                  child: Center(
-                                    child: Text(
-                                      "Recently Sold",
-                                      style: TextStyle(
-                                          color: Theme.of(context).primaryColor,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ),
-                                Divider(),
-                                ListView.builder(
-                                  shrinkWrap: true,
-                                  itemCount: snapshot.data.documents.length + 1,
-                                  itemBuilder: (context, index) {
-                                    if (index == 0) {
-                                      return Padding(
-                                        padding: const EdgeInsets.all(6.0),
-                                        child: Row(
-                                          children: <Widget>[
-                                            Expanded(
-//                                            flex: 2,
-                                              child: Text("Date",
-                                                  style: TextStyle(
-                                                      color: Colors.teal,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                            ),
-                                            Expanded(
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 8.0),
-                                                child: Text("Time",
-                                                    style: TextStyle(
-                                                        color: Colors.teal,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                            ),
-                                            Expanded(
-//                                            flex: 2,
-                                              child: Text("Product",
-                                                  style: TextStyle(
-                                                      color: Colors.teal,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                            ),
-                                            Expanded(
-                                              child: Container(
-                                                  margin: const EdgeInsets.only(
-                                                      left: 8),
-                                                  child: Text('Qty',
-                                                      style: TextStyle(
-                                                          color: Colors.teal,
-                                                          fontWeight: FontWeight
-                                                              .bold))),
-                                            ),
-                                            Expanded(
-                                              child: Text('Price',
-                                                  style: TextStyle(
-                                                      color: Colors.teal,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                            )
-                                          ],
-                                        ),
-                                      );
-                                    }
-                                    index -= 1;
-
-                                    DocumentSnapshot documentSnap =
-                                        snapshot.data.documents[index];
-                                    Timestamp dateStamp =
-                                        documentSnap['dateTime'];
+                            color: Colors.brown[100],
+                            width: 350,
+                            child: ListView.builder(
+                              itemCount: snapshot.data.documents.length,
+                              itemBuilder: (context, index) {
+                                DocumentSnapshot documentSnap =
+                                    snapshot.data.documents[index];
+                                Timestamp dateStamp = documentSnap['dateTime'];
 //                                print(dateStamp);
-                                    DateTime date = dateStamp.toDate();
-                                    String formattedDate =
-                                        DateFormat('dd-MMM-yy').format(date);
-                                    String formattedTime =
-                                        DateFormat('kk:mm').format(date);
-
-                                    return Card(
-                                      elevation: 1,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(6.0),
-                                        child: Row(
-                                          children: <Widget>[
-                                            Expanded(
-//                                            flex: 2,
-                                              child: Text(formattedDate),
-                                            ),
-                                            Expanded(
-                                              child: Container(
-                                                margin: const EdgeInsets.only(
-                                                    left: 8.0),
-                                                child: Text(formattedTime),
-                                              ),
-                                            ),
-                                            Expanded(
-//                                            flex: 2,
-                                              child: Text(
-                                                documentSnap['product'],
-                                              ),
-                                            ),
-                                            Expanded(
-                                              child: Container(
-                                                margin: const EdgeInsets.only(
-                                                    left: 8.0),
-                                                child: Text(
-                                                    documentSnap['quantity']
-                                                        .toString()),
-                                              ),
-                                            ),
-                                            Expanded(
-                                              child: Text(documentSnap['price']
-                                                  .toString()),
-                                            )
-                                          ],
+                                DateTime date = dateStamp.toDate();
+                                String formattedDate =
+                                    DateFormat('yyyy-MM-dd - kk:mm')
+                                        .format(date);
+//                                String formattedTime = DateFormat('kk:mm').format(date);
+                                return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    children: <Widget>[
+                                      Expanded(
+                                        flex: 3,
+                                        child: Text(formattedDate),
+                                      ),
+//                                      Expanded(
+//                                        child: Text(formattedTime),
+//                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          documentSnap['product'],
                                         ),
                                       ),
-                                    );
-                                  },
-                                ),
-                              ],
+                                      Expanded(
+                                        flex: 1,
+                                        child: Text(documentSnap['quantity']
+                                            .toString()),
+                                      ),
+                                      Expanded(
+                                        flex: 1,
+                                        child: Text(
+                                            documentSnap['price'].toString()),
+                                      )
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
                           ),
                           Container(
                             color: Colors.blue,
                             width: 350,
                             child:
-                            Center(child: Text("Total Sales: $totalSales")),
+                                Center(child: Text("Total Sales: $totalSales")),
                           )
                         ],
                       );
@@ -201,64 +118,47 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  RaisedButton.icon(
-                    icon: Icon(Icons.book, color: Theme
-                        .of(context)
-                        .primaryColor),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) => RecordPage()));
-                    },
-                    label: Text("Records"),
-                  ),
-//              RaisedButton(
-//                  onPressed: () {
-//                    Navigator.of(context).push(
-//                        MaterialPageRoute(builder: (context) => SalesPage()));
-//                  },
-//                  child: Text("Sales"))
-                ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => RecordPage()));
+                },
+                child: Text("Stocks"),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  RaisedButton.icon(
-                    icon: Icon(
-                      Icons.shopping_cart,
-                      color: Theme
-                          .of(context)
-                          .primaryColor,
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) => SellStockPage()));
-                    },
-                    label: Text("Sell"),
-                  ),
-                  RaisedButton.icon(
-                    icon: Icon(
-                      Icons.add_shopping_cart,
-                      color: Theme
-                          .of(context)
-                          .primaryColor,
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) => AddStockPage()));
-                    },
-                    label: Text("Add Stock"),
-                  )
-                ],
+              RaisedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => SalesPage()));
+                  },
+                  child: Text("Sales"))
+            ],
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              RaisedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => SellStockPage()));
+                },
+                child: Text("Sell"),
+              ),
+              RaisedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => AddStockPage()));
+                },
+                child: Text("Add Stock"),
+              )
+            ],
+          )
         ]));
   }
 }
+
 
 class RootPage extends StatefulWidget {
   @override
@@ -273,7 +173,6 @@ class _RootPageState extends State<RootPage> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.active) {
             final bool isLoggedIn = snapshot.hasData;
-//            if (Navigator.of(context).canPop()) Navigator.of(context).pop();
             print("isLoggedIn: $isLoggedIn");
 
             return isLoggedIn ? HomePage() : LoginPage();
@@ -284,3 +183,5 @@ class _RootPageState extends State<RootPage> {
         });
   }
 }
+
+
