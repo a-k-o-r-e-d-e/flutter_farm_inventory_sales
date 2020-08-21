@@ -9,20 +9,7 @@ class RecordPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Stocks'),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(
-              Icons.home,
-            ),
-            onPressed: () {
-//              This will basically push a home and remove all the routes behind the new one
-              Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
-              Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (context) => HomePage()));
-            },
-          )
-        ],
+        title: Text('Records Page'),
       ),
       body: Column(
         children: <Widget>[
@@ -34,7 +21,7 @@ class RecordPage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 25,
                   fontWeight: FontWeight.bold,
-                  color: Colors.brown,
+                  color: Theme.of(context).primaryColor,
                 ),
                 textAlign: TextAlign.left,
               )),
@@ -77,10 +64,10 @@ class RecordPage extends StatelessWidget {
 
                 return ListView.builder(
                     shrinkWrap: true,
-                    itemCount: snapshot.data.documents.length,
+                    itemCount: snapshot.data.products.length,
                     itemBuilder: (BuildContext buildContext, int index) {
                       DocumentSnapshot documentSnapshot =
-                          snapshot.data.documents[index];
+                      snapshot.data.products[index];
                       return Card(
                         elevation: 1,
                         margin: EdgeInsets.symmetric(vertical: 12.0),
@@ -88,7 +75,8 @@ class RecordPage extends StatelessWidget {
                           onTap: () {
                             print("Tapped: ${documentSnapshot['itemName']}");
                             Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => ProductHistory(
+                                builder: (context) =>
+                                    ProductHistory(
                                       productName: documentSnapshot['itemName'],
                                     )));
                           },
@@ -136,6 +124,19 @@ class ProductHistory extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("$productName History"),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(
+              Icons.home,
+            ),
+            onPressed: () {
+//              This will basically push a home and remove all the routes behind the new one
+              Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+              Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (context) => HomePage()));
+            },
+          )
+        ],
       ),
       body: Column(
         children: <Widget>[
@@ -192,14 +193,14 @@ class ProductHistory extends StatelessWidget {
 
                   return ListView.builder(
                       shrinkWrap: true,
-                      itemCount: snapshot.data.documents.length,
+                      itemCount: snapshot.data.products.length,
                       itemBuilder: (BuildContext buildContext, int index) {
                         DocumentSnapshot documentSnapshot =
-                            snapshot.data.documents[index];
+                        snapshot.data.products[index];
                         Timestamp dateStamp = documentSnapshot['dateTime'];
                         DateTime date = dateStamp.toDate();
                         String formattedDate =
-                            DateFormat('dd-MMM-yy').format(date);
+                        DateFormat('dd-MMM-yy').format(date);
 
                         String price = documentSnapshot['price'] != null
                             ? documentSnapshot['price'].toString()
@@ -219,16 +220,17 @@ class ProductHistory extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 15.0),
                             child: Row(
                               children: <Widget>[
-                                Expanded(
-                                  flex: 1,
-                                  child: Text(
-                                    "${index + 1}",
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
+//                                Expanded(
+//                                  flex: 1,
+//                                  child: Text(
+//                                    "${index + 1}",
+//                                    textAlign: TextAlign.center,
+//                                  ),
+//                                ),
                                 Expanded(
                                   flex: 3,
-                                  child: Text(formattedDate),
+                                  child: Text(formattedDate,
+                                    textAlign: TextAlign.center,),
                                 ),
                                 Expanded(
                                   flex: 3,

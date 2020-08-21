@@ -29,10 +29,17 @@ class DrawerUtil extends StatelessWidget {
           Padding(padding: EdgeInsets.symmetric(vertical: 10.0)),
           ListTile(
             title: Text('Update Inventory list'),
+            trailing: Icon(
+              Icons.system_update_alt,
+              color: Theme.of(context).primaryColor,
+            ),
           ),
           Divider(height: 3),
           ListTile(
             title: Text('Sales Chart'),
+            trailing: Icon(Icons.show_chart, color: Theme
+                .of(context)
+                .primaryColor,),
           ),
           Divider(height: 3),
           Expanded(
@@ -44,6 +51,9 @@ class DrawerUtil extends StatelessWidget {
                   Divider(height: 3),
                   ListTile(
                     title: Text("Log Out"),
+                    trailing: Icon(Icons.hdr_strong, color: Theme
+                        .of(context)
+                        .primaryColor,),
                     onTap: () {
                       Navigator.pop(context);
                       BaseAuth auth = AuthFireBase();

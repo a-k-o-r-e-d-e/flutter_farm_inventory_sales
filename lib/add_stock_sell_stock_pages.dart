@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 var dropDownValue;
+StreamController<String> controller = StreamController<String>.broadcast();
 
 class AddStockPage extends StatefulWidget {
   @override
@@ -13,6 +15,7 @@ class AddStockPage extends StatefulWidget {
 class _AddStockPageState extends State<AddStockPage> {
   TextEditingController _quantityTextController = TextEditingController();
   final formKey = GlobalKey<FormState>();
+  Map<String, DocumentSnapshot> documents = HashMap();
 
   @override
   void dispose() {
@@ -20,62 +23,122 @@ class _AddStockPageState extends State<AddStockPage> {
     super.dispose();
   }
 
+  void _handleAddStock() {
+    if (formKey.currentState.validate()) {
+      var quantity = int.parse(_quantityTextController.text);
+
+      var farmRecordsCollection = Firestore.instance.collection('farm_records');
+      Map<String, dynamic> farmRecordsMap = Map();
+      farmRecordsMap.putIfAbsent('action', () => "addStock");
+      farmRecordsMap.putIfAbsent('product', () => dropDownValue);
+      farmRecordsMap.putIfAbsent('quantity', () => quantity);
+      farmRecordsMap.putIfAbsent('dateTime', () => DateTime.now().toUtc());
+
+      var documentSnapshot = documents[dropDownValue];
+//                print("XXX: ${documentSnapshot['itemName']}");
+      Firestore.instance
+          .runTransaction((transaction) async {
+            DocumentSnapshot freshSnap =
+                await transaction.get(documentSnapshot.reference);
+            await transaction.update(freshSnap.reference,
+                {'quantity': documentSnapshot['quantity'] + quantity});
+            farmRecordsCollection.add(farmRecordsMap);
+          })
+          .whenComplete(() => showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  content: Container(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                            "${_quantityTextController.text} $dropDownValue Successfully added to Inventory!"),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: RaisedButton(
+                              child: Text("Ok!"),
+                              onPressed: () {
+                                Navigator.pop(context);
+                                formKey.currentState.reset();
+                              }),
+                        )
+                      ],
+                    ),
+                  ),
+                );
+              }))
+          .catchError((onError) {
+            showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    content: Container(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text("Addition to Inventory failed!!"),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: RaisedButton(
+                                child: Text("Ok!"),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  formKey.currentState.reset();
+                                }),
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                });
+          });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    Map<String, DocumentSnapshot> documents = HashMap();
     return Scaffold(
       appBar: AppBar(title: Text("Add Stock")),
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-            _buildAvailableStockCard(),
+            _buildAvailableStockCard(context),
             SizedBox(
               height: 50,
             ),
-            Form(
-              key: formKey,
-              child: Column(
-                children: <Widget>[
-                  _buildItemsDropdown(
-                    documents: documents,
+            Card(
+              margin: EdgeInsets.all(6.0),
+              child: Container(
+                color: Colors.teal[100],
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    children: <Widget>[
+                      _buildItemsDropdown(
+                        documents: documents,
+                      ),
+                      _buildTextFormField(context,
+                          hintText: "Enter Quantity",
+                          labelText: "Quantity",
+                          validator: (String val) => _isInvalidText(val)
+                              ? "Please enter valid quantity"
+                              : null,
+                          textController: _quantityTextController),
+                    ],
                   ),
-                  _buildTextFormField(
-                      hintText: "Enter Quantity",
-                      labelText: "Quantity",
-                      validator: (String val) => _isInvalidText(val)
-                          ? "Please enter valid quantity"
-                          : null,
-                      textController: _quantityTextController),
-                ],
+                ),
               ),
             ),
-            RaisedButton(
-              onPressed: () {
-                if (formKey.currentState.validate()) {
-                  var quantity = int.parse(_quantityTextController.text);
-
-                  var farmRecordsCollection =
-                      Firestore.instance.collection('farm_records');
-                  Map<String, dynamic> farmRecordsMap = Map();
-                  farmRecordsMap.putIfAbsent('action', () => "addStock");
-                  farmRecordsMap.putIfAbsent('product', () => dropDownValue);
-                  farmRecordsMap.putIfAbsent('quantity', () => quantity);
-                  farmRecordsMap.putIfAbsent(
-                      'dateTime', () => DateTime.now().toUtc());
-
-                  var documentSnapshot = documents[dropDownValue];
-//                print("XXX: ${documentSnapshot['itemName']}");
-                  Firestore.instance.runTransaction((transaction) async {
-                    DocumentSnapshot freshSnap =
-                        await transaction.get(documentSnapshot.reference);
-                    await transaction.update(freshSnap.reference,
-                        {'quantity': documentSnapshot['quantity'] + quantity});
-                    farmRecordsCollection.add(farmRecordsMap);
-                  });
-                }
-              },
-              child: Text("Add Items"),
-            )
+            _buildButton(
+                context: context,
+                btnText: "Add Items",
+                btnIcon: Icons.add_shopping_cart,
+                onBtnPressed: _handleAddStock),
+//            RaisedButton(
+//              onPressed: _handleAddStock,
+//              child: Text("Add Items"),
+//            )
           ],
         ),
       ),
@@ -93,6 +156,104 @@ class _SellStockPageState extends State<SellStockPage> {
 
   TextEditingController _quanTextController = TextEditingController();
   TextEditingController _priceTextController = TextEditingController();
+  var netPriceText;
+
+  Map<String, DocumentSnapshot> products = HashMap();
+
+  Stream stream;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _quanTextController.addListener(() {
+      // This makes the net Price to recalculate each time quantity changes
+      // Make sure dropDownValue is not null
+      if (dropDownValue != null) {
+        controller.add(dropDownValue);
+      }
+    });
+    stream = controller.stream.asBroadcastStream();
+  }
+
+  void _handleSellStock() {
+    final form = formKey.currentState;
+    print(dropDownValue != null);
+    if (form.validate()) {
+      var quantity = int.parse(_quanTextController.text);
+      var stockDocumentSnapshot = products[dropDownValue];
+      var salesCollection = Firestore.instance.collection('farm_records');
+      Map<String, dynamic> salesMap = Map();
+      salesMap.putIfAbsent('action', () => 'sale');
+      salesMap.putIfAbsent('product', () => dropDownValue);
+      salesMap.putIfAbsent('price', () => netPriceText);
+      salesMap.putIfAbsent('quantity', () => quantity);
+      salesMap.putIfAbsent('dateTime', () => DateTime.now().toUtc());
+      print(stockDocumentSnapshot['itemName']);
+      Firestore.instance.runTransaction((transaction) async {
+        DocumentSnapshot freshSnap =
+        await transaction.get(stockDocumentSnapshot.reference);
+        await transaction.update(freshSnap.reference,
+            {'quantity': stockDocumentSnapshot['quantity'] - quantity});
+        salesCollection.add(salesMap);
+      }).whenComplete(() =>
+          showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  content: Container(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text("${_quanTextController
+                            .text} $dropDownValue Successfully sold for $netPriceText Naira"),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: RaisedButton(
+                              child: Text("Ok!"),
+                              onPressed: () {
+                                Navigator.pop(context);
+                                form.reset();
+                              }),
+                        )
+                      ],
+                    ),
+                  ),
+                );
+              })).catchError((error, stackTrace) {
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Container(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text("Transaction failed!!"),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: RaisedButton(
+                            child: Text("Ok!"),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              form.reset();
+                            }),
+                      )
+                    ],
+                  ),
+                ),
+              );
+            });
+      });
+    }
+  }
+
+  bool isQuantityAvailable(val) {
+    if (int.parse(val) <= products[dropDownValue]['quantity']) {
+      return true;
+    }
+    return false;
+  }
 
   @override
   void dispose() {
@@ -104,66 +265,140 @@ class _SellStockPageState extends State<SellStockPage> {
 
   @override
   Widget build(BuildContext context) {
-    Map<String, DocumentSnapshot> documents = HashMap();
     return Scaffold(
       appBar: AppBar(title: Text("Sell Stock")),
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-            _buildAvailableStockCard(),
-            Form(
-                key: formKey,
-                child: Column(
-                  children: <Widget>[
-                    _buildItemsDropdown(
-                      documents: documents,
-                    ),
-                    _buildTextFormField(
-                        hintText: "Enter Quantity sold",
-                        validator: (String val) => _isInvalidText(val)
-                            ? "Please enter valid quantity"
-                            : null,
-                        labelText: "Quantity",
-                        textController: _quanTextController),
-                    _buildTextFormField(
-                        hintText: "Enter price of items sold",
-                        validator: (val) => _isInvalidText(val)
-                            ? "Please enter valid quantity"
-                            : null,
-                        labelText: "Price",
-                        textController: _priceTextController),
-                  ],
-                )),
-            RaisedButton(
-              onPressed: () {
-                final form = formKey.currentState;
-                print(dropDownValue != null);
-                if (form.validate()) {
-                  var quantity = int.parse(_quanTextController.text);
-                  var stockDocumentSnapshot = documents[dropDownValue];
-                  var salesCollection =
-                      Firestore.instance.collection('farm_records');
-                  Map<String, dynamic> salesMap = Map();
-                  salesMap.putIfAbsent('action', () => 'sale');
-                  salesMap.putIfAbsent('product', () => dropDownValue);
-                  salesMap.putIfAbsent(
-                      'price', () => int.parse(_priceTextController.text));
-                  salesMap.putIfAbsent('quantity', () => quantity);
-                  salesMap.putIfAbsent(
-                      'dateTime', () => DateTime.now().toUtc());
-                  print(stockDocumentSnapshot['itemName']);
-                  Firestore.instance.runTransaction((transaction) async {
-                    DocumentSnapshot freshSnap =
-                        await transaction.get(stockDocumentSnapshot.reference);
-                    await transaction.update(freshSnap.reference, {
-                      'quantity': stockDocumentSnapshot['quantity'] - quantity
-                    });
-                    salesCollection.add(salesMap);
-                  });
-                }
-              },
-              child: Text("Sell Product"),
-            )
+            _buildAvailableStockCard(context),
+            Card(
+              margin: EdgeInsets.all(6.0),
+              child: Container(
+                color: Colors.teal[100],
+                child: Form(
+                    key: formKey,
+                    child: Column(
+                      children: <Widget>[
+                        _buildItemsDropdown(
+                          documents: products,
+                        ),
+                        Card(
+                          margin: EdgeInsets.all(8.0),
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                                bottom: 8.0, left: 8.0, right: 8.0),
+                            child: Row(
+                              children: <Widget>[
+                                Padding(
+                                  padding:
+                                  const EdgeInsets.only(right: 15, top: 15),
+                                  child: Text("Current Price: ",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color:
+                                          Theme
+                                              .of(context)
+                                              .primaryColor)),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                      padding: const EdgeInsets.only(
+                                          right: 15, top: 15),
+                                      child: StreamBuilder<String>(
+                                          stream: controller.stream,
+                                          builder: (context, snapshot) {
+                                            if (snapshot.hasData) {
+                                              return Text(
+                                                products[snapshot.data]
+                                                ['currentPrice']
+                                                    .toString(),
+                                              );
+                                            }
+                                            return Text(
+                                              'Please Select an Item first',
+                                            );
+                                          })),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        _buildTextFormField(context,
+                            hintText: "Enter Quantity sold",
+                            validator: (String val) {
+                              if (_isInvalidText(val)) {
+                                return "Please enter valid quantity";
+                              } else if (!isQuantityAvailable(val)) {
+                                return "Quantity sold is more than Quantity available";
+                              }
+                              return null;
+                            },
+                            labelText: "Quantity",
+                            textController: _quanTextController),
+                        Card(
+                          margin: EdgeInsets.all(8.0),
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                                bottom: 8.0, left: 8.0, right: 8.0),
+                            child: Row(
+                              children: <Widget>[
+                                Padding(
+                                  padding:
+                                  const EdgeInsets.only(right: 15, top: 15),
+                                  child: Text("Net Price: ",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color:
+                                          Theme
+                                              .of(context)
+                                              .primaryColor)),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        right: 15, top: 15),
+                                    child: StreamBuilder<String>(
+                                        stream: controller.stream,
+                                        builder: (context, snapshot) {
+                                          var text;
+                                          if (snapshot.hasData) {
+                                            if (_quanTextController
+                                                .text.isNotEmpty) {
+                                              netPriceText = products[snapshot
+                                                  .data]['currentPrice'] *
+                                                  int.parse(
+                                                      _quanTextController.text);
+                                              text = netPriceText.toString();
+                                            } else {
+                                              // No Quantity entered
+                                              text =
+                                              "Please enter a valid Amount";
+                                            }
+                                          } else {
+                                            // No Item selected in dropdown
+                                            text =
+                                            'Please Select an Item first';
+                                          }
+
+                                          return Text(
+                                            text,
+                                          );
+                                        }),
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    )),
+              ),
+            ),
+            _buildButton(
+                context: context,
+                btnText: "Sell Product",
+                btnIcon: Icons.shopping_cart,
+                onBtnPressed: _handleSellStock),
           ],
         ),
       ),
@@ -179,17 +414,30 @@ Widget _buildListItem(BuildContext context, DocumentSnapshot documentSnapshot) {
           Expanded(
             child: Text(
               documentSnapshot['itemName'],
-              style: Theme.of(context).textTheme.headline,
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .headline5
+                  .copyWith(color: Theme
+                  .of(context)
+                  .primaryColor),
             ),
           ),
           Container(
-            decoration: const BoxDecoration(
-              color: Color(0xffddddff),
-            ),
+            color: Colors.teal[150],
+//            decoration: const BoxDecoration(
+//              color: Colors.teal[100],
+//            ),
             padding: const EdgeInsets.all(8.0),
             child: Text(
               documentSnapshot['quantity'].toString().padLeft(5),
-              style: Theme.of(context).textTheme.display1,
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .headline4
+                  .copyWith(color: Theme
+                  .of(context)
+                  .primaryColor),
             ),
           )
         ],
@@ -198,75 +446,140 @@ Widget _buildListItem(BuildContext context, DocumentSnapshot documentSnapshot) {
   );
 }
 
-Widget _buildAvailableStockCard() {
-  return Column(
-    children: <Widget>[
-      Padding(
-        padding: const EdgeInsets.only(top: 8.0),
-        child: Text(
-          "Available Stock",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          textAlign: TextAlign.center,
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: SizedBox(
-          height: 125,
-          child: Card(
-            elevation: 8,
-            child: Padding(
-              padding: const EdgeInsets.all(5.0),
-              child: StreamBuilder(
-                  stream:
-                      Firestore.instance.collection("inventory").snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return Center(
-                        child: ListView(
-                          children: <Widget>[
-                            CircularProgressIndicator(),
-                            Padding(padding: const EdgeInsets.only(top: 10.0)),
-                            Text("Loading...")
-                          ],
-//                              ),
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                        itemCount: snapshot.data.documents.length,
-                        itemBuilder: (context, index) => _buildListItem(
-                            context, snapshot.data.documents[index]));
-                  }),
+Widget _buildAvailableStockCard(BuildContext context) {
+  return Card(
+    margin: const EdgeInsets.all(8.0),
+    child: Container(
+      color: Colors.teal[100],
+      child: Column(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(top: 6.0),
+            child: Text(
+              "Available Stock",
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Theme
+                      .of(context)
+                      .primaryColor),
+              textAlign: TextAlign.center,
             ),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Card(
+              elevation: 8,
+              child: Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: StreamBuilder(
+                  stream: controller.stream,
+                  builder: (context, snapshot) {
+                    Stream stream;
+                    if (snapshot.hasData) {
+                      stream = Firestore.instance
+                          .collection("inventory")
+                          .where('itemName', isEqualTo: snapshot.data)
+                          .snapshots();
+                    } else {
+                      stream = Firestore.instance
+                          .collection("inventory")
+                          .limit(3)
+                          .snapshots();
+                    }
+                    return StreamBuilder(
+                        stream: stream,
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return Center(
+                              child: ListView(
+                                shrinkWrap: true,
+                                children: <Widget>[
+                                  CircularProgressIndicator(),
+                                  Padding(
+                                      padding:
+                                      const EdgeInsets.only(top: 10.0)),
+                                  Text("Loading...")
+                                ],
+//                              ),
+                              ),
+                            );
+                          }
+
+                          return ListView.builder(
+//                            itemExtent: ,
+                              shrinkWrap: true,
+                              itemCount: snapshot.data.documents.length,
+                              itemBuilder: (context, index) =>
+                                  _buildListItem(
+                                      context, snapshot.data.documents[index]));
+                        });
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-    ],
+    ),
   );
 }
 
-Widget _buildTextFormField(
+Widget _buildTextFormField(BuildContext context,
     {String hintText,
-    String labelText,
-    TextEditingController textController,
-    Function validator}) {
-  return Padding(
-    padding: const EdgeInsets.all(16.0),
-    child: TextFormField(
-      controller: textController,
-      validator: validator,
-      keyboardType: TextInputType.number,
-      decoration: InputDecoration(
-        hintText: hintText,
-        prefixIcon: Padding(
-            padding: EdgeInsets.only(right: 15, top: 15),
-            child: Text(
-              "$labelText:",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            )),
+      String labelText,
+      TextEditingController textController,
+      Function validator}) {
+  return Card(
+    margin: EdgeInsets.all(8.0),
+    child: Padding(
+      padding: const EdgeInsets.only(bottom: 8.0, left: 8.0, right: 8.0),
+      child: Row(
+        children: <Widget>[
+//        Text("$labelText: ", style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),),
+          Expanded(
+            child: TextFormField(
+              controller: textController,
+              validator: validator,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: hintText,
+                prefixIcon: Padding(
+                    padding: EdgeInsets.only(right: 15, top: 15),
+                    child: Text(
+                      "$labelText:",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme
+                              .of(context)
+                              .primaryColor),
+                    )),
+              ),
+            ),
+          ),
+        ],
       ),
+    ),
+  );
+}
+
+Widget _buildButton({BuildContext context,
+  String btnText,
+  IconData btnIcon,
+  Function onBtnPressed}) {
+  return RaisedButton.icon(
+    icon: Icon(
+      btnIcon,
+      color: Theme
+          .of(context)
+          .primaryColor,
+    ),
+    onPressed: onBtnPressed,
+    label: Text(
+      btnText,
+      style: TextStyle(color: Theme
+          .of(context)
+          .primaryColor),
     ),
   );
 }
@@ -283,56 +596,82 @@ class _buildItemsDropdown extends StatefulWidget {
 class __buildItemsDropdownState extends State<_buildItemsDropdown> {
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text("Select Item: "),
-        StreamBuilder(
-            stream: Firestore.instance.collection("inventory").snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return Text("Loading....");
-              }
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 8.0),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+//          Text("Select Item: ", style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),),
+            StreamBuilder(
+                stream: Firestore.instance.collection("inventory").snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return Text("Loading....");
+                  }
 
-              var itemLists = List<String>.generate(
-                  snapshot.data.documents.length, (int index) {
-                widget.documents.putIfAbsent(
-                    snapshot.data.documents[index]['itemName'],
-                    () => snapshot.data.documents[index]);
-                return snapshot.data.documents[index]['itemName'];
-              });
-              print("Keys: ${widget.documents.keys}");
+                  var itemLists = List<String>.generate(
+                      snapshot.data.documents.length, (int index) {
+                    widget.documents.putIfAbsent(
+                        snapshot.data.documents[index]['itemName'],
+                            () => snapshot.data.documents[index]);
+                    return snapshot.data.documents[index]['itemName'];
+                  });
+                  print("Keys: ${widget.documents.keys}");
 
-              return Expanded(
-                child: DropdownButtonFormField<String>(
-                  hint: Text("Select Item"),
-                  value: dropDownValue,
-                  elevation: 5,
-                  items: widget.documents.keys.map((String value) {
-                    print(itemLists);
-                    return DropdownMenuItem(value: value, child: Text(value));
-                  }).toList(),
-                  onChanged: (String newValue) {
-                    setState(() {
-                      dropDownValue = newValue;
-                      print(dropDownValue);
-                    });
-                  },
-                  validator: (value) => value == null
-                      ? "Field required: Please select item from dropdown"
-                      : null,
-                ),
-              );
-            }),
-      ],
+                  return Expanded(
+                    child: DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                          prefixIcon: Padding(
+                              padding: EdgeInsets.only(right: 15, top: 15),
+                              child: Text(
+                                "Select Item:",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme
+                                        .of(context)
+                                        .primaryColor),
+                              ))),
+                      hint: Text(
+                        "Select Item",
+                      ),
+                      value: dropDownValue,
+                      elevation: 5,
+                      items: widget.documents.keys.map((String value) {
+                        print(itemLists);
+                        return DropdownMenuItem(
+                            value: value, child: Text(value));
+                      }).toList(),
+                      onChanged: (String newValue) {
+                        controller.add(newValue);
+                        setState(() {
+                          dropDownValue = newValue;
+                          print(dropDownValue);
+                        });
+                      },
+                      validator: (value) =>
+                      value == null
+                          ? "Field required: Please select item from dropdown"
+                          : null,
+                    ),
+                  );
+                }),
+          ],
+        ),
+      ),
     );
   }
 }
 
 _isInvalidText(String val) {
   RegExp _numericPattern = RegExp(r'^[0-9]+$');
-
-  if (val.isEmpty || !_numericPattern.hasMatch(val) || val == null) {
+  // Pattern Checks if string is made up of only zeros
+  RegExp _zeroPattern = RegExp(r'^0+$');
+  if (val.isEmpty ||
+      _zeroPattern.hasMatch(val) ||
+      !_numericPattern.hasMatch(val) ||
+      val == null) {
     return true;
   }
   return false;

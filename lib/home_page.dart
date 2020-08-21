@@ -193,7 +193,7 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.blue,
                             width: 350,
                             child:
-                            Center(child: Text("Total Sales: $totalSales")),
+                                Center(child: Text("Total Sales: $totalSales")),
                           )
                         ],
                       );
@@ -201,46 +201,50 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 10.0,
+                mainAxisSpacing: 10.0,
+                shrinkWrap: true,
+                children: [
                   RaisedButton.icon(
-                    icon: Icon(Icons.book, color: Theme
-                        .of(context)
-                        .primaryColor),
+                    color: Colors.teal[100],
+                    icon:
+                        Icon(Icons.book, color: Theme.of(context).primaryColor),
                     onPressed: () {
-                      Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) => RecordPage()));
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => RecordPage()));
                     },
                     label: Text("Records"),
                   ),
-//              RaisedButton(
-//                  onPressed: () {
+                  RaisedButton.icon(
+                      color: Colors.teal[100],
+                      icon: Icon(
+                        Icons.business_center,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      onPressed: () {
 //                    Navigator.of(context).push(
 //                        MaterialPageRoute(builder: (context) => SalesPage()));
-//                  },
-//                  child: Text("Sales"))
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
+                      },
+                      label: Text("Update Products")),
                   RaisedButton.icon(
+                    color: Colors.teal[100],
                     icon: Icon(
                       Icons.shopping_cart,
-                      color: Theme
-                          .of(context)
-                          .primaryColor,
+                      color: Theme.of(context).primaryColor,
                     ),
                     onPressed: () {
-                      Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) => SellStockPage()));
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => SellStockPage()));
                     },
                     label: Text("Sell"),
                   ),
                   RaisedButton.icon(
+                    color: Colors.teal[100],
                     icon: Icon(
                       Icons.add_shopping_cart,
                       color: Theme
@@ -248,15 +252,78 @@ class _HomePageState extends State<HomePage> {
                           .primaryColor,
                     ),
                     onPressed: () {
-                      Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) => AddStockPage()));
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => AddStockPage()));
                     },
                     label: Text("Add Stock"),
                   )
-                ],
-          ),
-        ]));
+                    ],
+                  ),
+                ),
+              ),
+//          Expanded(
+//            child: Container(
+//              color: Colors.blue,
+//              child: Row(
+//                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                children: <Widget>[
+//                  Expanded(
+//                    child: RaisedButton.icon(
+//                      icon: Icon(Icons.book,
+//                          color: Theme.of(context).primaryColor),
+//                      onPressed: () {
+//                        Navigator.of(context).push(MaterialPageRoute(
+//                            builder: (context) => RecordPage()));
+//                      },
+//                      label: Text("Records"),
+//                    ),
+//                  ),
+//                  Expanded(
+//                    child: RaisedButton(
+//                        onPressed: () {
+////                    Navigator.of(context).push(
+////                        MaterialPageRoute(builder: (context) => SalesPage()));
+//                        },
+//                        child: Text("Update Products")),
+//                  )
+//                ],
+//              ),
+//            ),
+//          ),
+//          Expanded(
+//            child: Container(
+//              child: Row(
+//                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                children: <Widget>[
+//                  Expanded(
+//                    child: RaisedButton.icon(
+//                      icon: Icon(
+//                        Icons.shopping_cart,
+//                        color: Theme.of(context).primaryColor,
+//                      ),
+//                      onPressed: () {
+//                        Navigator.of(context).push(MaterialPageRoute(
+//                            builder: (context) => SellStockPage()));
+//                      },
+//                      label: Text("Sell"),
+//                    ),
+//                  ),
+//                  RaisedButton.icon(
+//                    icon: Icon(
+//                      Icons.add_shopping_cart,
+//                      color: Theme.of(context).primaryColor,
+//                    ),
+//                    onPressed: () {
+//                      Navigator.of(context).push(MaterialPageRoute(
+//                          builder: (context) => AddStockPage()));
+//                    },
+//                    label: Text("Add Stock"),
+//                  )
+//                ],
+//              ),
+//            ),
+//          ),
+            ]));
   }
 }
 

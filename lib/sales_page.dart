@@ -8,7 +8,7 @@ class SalesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Stocks'),
+        title: Text('Company Records'),
         actions: <Widget>[
           IconButton(
             icon: Icon(
@@ -33,7 +33,7 @@ class SalesPage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 25,
                   fontWeight: FontWeight.bold,
-                  color: Colors.brown,
+                  color: Theme.of(context).primaryColor,
                 ),
                 textAlign: TextAlign.left,
               )),
@@ -72,10 +72,10 @@ class SalesPage extends StatelessWidget {
 
                 return ListView.builder(
                     shrinkWrap: true,
-                    itemCount: snapshot.data.documents.length,
+                    itemCount: snapshot.data.products.length,
                     itemBuilder: (BuildContext buildContext, int index) {
                       DocumentSnapshot documentSnapshot =
-                          snapshot.data.documents[index];
+                      snapshot.data.products[index];
                       return Row(
                         children: <Widget>[
                           Expanded(
