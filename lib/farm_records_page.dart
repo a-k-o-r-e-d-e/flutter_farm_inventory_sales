@@ -64,10 +64,10 @@ class RecordPage extends StatelessWidget {
 
                 return ListView.builder(
                     shrinkWrap: true,
-                    itemCount: snapshot.data.products.length,
+                    itemCount: snapshot.data.documents.length,
                     itemBuilder: (BuildContext buildContext, int index) {
                       DocumentSnapshot documentSnapshot =
-                      snapshot.data.products[index];
+                          snapshot.data.documents[index];
                       return Card(
                         elevation: 1,
                         margin: EdgeInsets.symmetric(vertical: 12.0),
@@ -75,8 +75,7 @@ class RecordPage extends StatelessWidget {
                           onTap: () {
                             print("Tapped: ${documentSnapshot['itemName']}");
                             Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) =>
-                                    ProductHistory(
+                                builder: (context) => ProductHistory(
                                       productName: documentSnapshot['itemName'],
                                     )));
                           },
@@ -193,10 +192,10 @@ class ProductHistory extends StatelessWidget {
 
                   return ListView.builder(
                       shrinkWrap: true,
-                      itemCount: snapshot.data.products.length,
+                      itemCount: snapshot.data.documents.length,
                       itemBuilder: (BuildContext buildContext, int index) {
                         DocumentSnapshot documentSnapshot =
-                        snapshot.data.products[index];
+                        snapshot.data.documents[index];
                         Timestamp dateStamp = documentSnapshot['dateTime'];
                         DateTime date = dateStamp.toDate();
                         String formattedDate =

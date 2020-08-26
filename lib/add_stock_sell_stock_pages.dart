@@ -35,7 +35,6 @@ class _AddStockPageState extends State<AddStockPage> {
       farmRecordsMap.putIfAbsent('dateTime', () => DateTime.now().toUtc());
 
       var documentSnapshot = documents[dropDownValue];
-//                print("XXX: ${documentSnapshot['itemName']}");
       Firestore.instance
           .runTransaction((transaction) async {
             DocumentSnapshot freshSnap =
@@ -115,13 +114,15 @@ class _AddStockPageState extends State<AddStockPage> {
                   key: formKey,
                   child: Column(
                     children: <Widget>[
-                      _buildItemsDropdown(
-                        documents: documents,
+                      ProductsDropdown(
+                        products: documents,
                       ),
-                      _buildTextFormField(context,
+                      buildTextFormField(context,
                           hintText: "Enter Quantity",
+                          textInputType: TextInputType.number,
                           labelText: "Quantity",
-                          validator: (String val) => _isInvalidText(val)
+                          validator: (String val) =>
+                          isInvalidNum(val)
                               ? "Please enter valid quantity"
                               : null,
                           textController: _quantityTextController),
@@ -130,15 +131,11 @@ class _AddStockPageState extends State<AddStockPage> {
                 ),
               ),
             ),
-            _buildButton(
+            buildButton(
                 context: context,
                 btnText: "Add Items",
                 btnIcon: Icons.add_shopping_cart,
                 onBtnPressed: _handleAddStock),
-//            RaisedButton(
-//              onPressed: _handleAddStock,
-//              child: Text("Add Items"),
-//            )
           ],
         ),
       ),
@@ -274,13 +271,15 @@ class _SellStockPageState extends State<SellStockPage> {
             Card(
               margin: EdgeInsets.all(6.0),
               child: Container(
-                color: Colors.teal[100],
+                color: Theme
+                    .of(context)
+                    .accentColor,
                 child: Form(
                     key: formKey,
                     child: Column(
                       children: <Widget>[
-                        _buildItemsDropdown(
-                          documents: products,
+                        ProductsDropdown(
+                          products: products,
                         ),
                         Card(
                           margin: EdgeInsets.all(8.0),
@@ -323,10 +322,11 @@ class _SellStockPageState extends State<SellStockPage> {
                             ),
                           ),
                         ),
-                        _buildTextFormField(context,
+                        buildTextFormField(context,
                             hintText: "Enter Quantity sold",
+                            textInputType: TextInputType.number,
                             validator: (String val) {
-                              if (_isInvalidText(val)) {
+                              if (isInvalidNum(val)) {
                                 return "Please enter valid quantity";
                               } else if (!isQuantityAvailable(val)) {
                                 return "Quantity sold is more than Quantity available";
@@ -394,7 +394,7 @@ class _SellStockPageState extends State<SellStockPage> {
                     )),
               ),
             ),
-            _buildButton(
+            buildButton(
                 context: context,
                 btnText: "Sell Product",
                 btnIcon: Icons.shopping_cart,
@@ -525,11 +525,12 @@ Widget _buildAvailableStockCard(BuildContext context) {
   );
 }
 
-Widget _buildTextFormField(BuildContext context,
+Widget buildTextFormField(BuildContext context,
     {String hintText,
-      String labelText,
-      TextEditingController textController,
-      Function validator}) {
+    String labelText,
+    TextEditingController textController,
+    TextInputType textInputType,
+    Function validator}) {
   return Card(
     margin: EdgeInsets.all(8.0),
     child: Padding(
@@ -541,7 +542,7 @@ Widget _buildTextFormField(BuildContext context,
             child: TextFormField(
               controller: textController,
               validator: validator,
-              keyboardType: TextInputType.number,
+              keyboardType: textInputType,
               decoration: InputDecoration(
                 hintText: hintText,
                 prefixIcon: Padding(
@@ -563,7 +564,7 @@ Widget _buildTextFormField(BuildContext context,
   );
 }
 
-Widget _buildButton({BuildContext context,
+Widget buildButton({BuildContext context,
   String btnText,
   IconData btnIcon,
   Function onBtnPressed}) {
@@ -584,16 +585,17 @@ Widget _buildButton({BuildContext context,
   );
 }
 
-class _buildItemsDropdown extends StatefulWidget {
-  Map<String, DocumentSnapshot> documents;
+class ProductsDropdown extends StatefulWidget {
+  Map<String, DocumentSnapshot> products;
+  String selectedItem;
 
-  _buildItemsDropdown({this.documents});
+  ProductsDropdown({this.products});
 
   @override
-  __buildItemsDropdownState createState() => __buildItemsDropdownState();
+  _ProductsDropdownState createState() => _ProductsDropdownState();
 }
 
-class __buildItemsDropdownState extends State<_buildItemsDropdown> {
+class _ProductsDropdownState extends State<ProductsDropdown> {
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -603,7 +605,6 @@ class __buildItemsDropdownState extends State<_buildItemsDropdown> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-//          Text("Select Item: ", style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),),
             StreamBuilder(
                 stream: Firestore.instance.collection("inventory").snapshots(),
                 builder: (context, snapshot) {
@@ -611,15 +612,17 @@ class __buildItemsDropdownState extends State<_buildItemsDropdown> {
                     return Text("Loading....");
                   }
 
+                  widget.products.clear();
                   var itemLists = List<String>.generate(
                       snapshot.data.documents.length, (int index) {
-                    widget.documents.putIfAbsent(
+                    print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx");
+                    widget.products.putIfAbsent(
                         snapshot.data.documents[index]['itemName'],
                             () => snapshot.data.documents[index]);
                     return snapshot.data.documents[index]['itemName'];
                   });
-                  print("Keys: ${widget.documents.keys}");
-
+                  print("Keys: ${widget.products.keys}");
+//                  controller.add("Test");
                   return Expanded(
                     child: DropdownButtonFormField<String>(
                       decoration: InputDecoration(
@@ -636,9 +639,9 @@ class __buildItemsDropdownState extends State<_buildItemsDropdown> {
                       hint: Text(
                         "Select Item",
                       ),
-                      value: dropDownValue,
+                      value: widget.selectedItem,
                       elevation: 5,
-                      items: widget.documents.keys.map((String value) {
+                      items: widget.products.keys.map((String value) {
                         print(itemLists);
                         return DropdownMenuItem(
                             value: value, child: Text(value));
@@ -648,6 +651,7 @@ class __buildItemsDropdownState extends State<_buildItemsDropdown> {
                         setState(() {
                           dropDownValue = newValue;
                           print(dropDownValue);
+                          widget.selectedItem = newValue;
                         });
                       },
                       validator: (value) =>
@@ -664,7 +668,7 @@ class __buildItemsDropdownState extends State<_buildItemsDropdown> {
   }
 }
 
-_isInvalidText(String val) {
+isInvalidNum(String val) {
   RegExp _numericPattern = RegExp(r'^[0-9]+$');
   // Pattern Checks if string is made up of only zeros
   RegExp _zeroPattern = RegExp(r'^0+$');

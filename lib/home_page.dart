@@ -8,6 +8,7 @@ import 'auth.dart';
 import 'drawer_util.dart';
 import 'farm_records_page.dart';
 import 'login_signup_pages.dart';
+import 'update_products_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -201,7 +202,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          Expanded(
+          Flexible(
+            fit: FlexFit.loose,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: GridView.count(
@@ -227,8 +229,9 @@ class _HomePageState extends State<HomePage> {
                         color: Theme.of(context).primaryColor,
                       ),
                       onPressed: () {
-//                    Navigator.of(context).push(
-//                        MaterialPageRoute(builder: (context) => SalesPage()));
+                        Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) => UpdateProductsPage()));
                       },
                       label: Text("Update Products")),
                   RaisedButton.icon(
