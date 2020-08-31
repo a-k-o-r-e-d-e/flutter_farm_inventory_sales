@@ -615,7 +615,6 @@ class _ProductsDropdownState extends State<ProductsDropdown> {
                   widget.products.clear();
                   var itemLists = List<String>.generate(
                       snapshot.data.documents.length, (int index) {
-                    print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx");
                     widget.products.putIfAbsent(
                         snapshot.data.documents[index]['itemName'],
                             () => snapshot.data.documents[index]);

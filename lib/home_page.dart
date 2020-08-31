@@ -24,309 +24,417 @@ class _HomePageState extends State<HomePage> {
         body:
             Column(mainAxisAlignment: MainAxisAlignment.spaceAround, children: <
                 Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              elevation: 8,
-              child: Container(
-                height: 260,
-                child: StreamBuilder(
-                    stream: Firestore.instance
-                        .collection("farm_records")
-                        .where("action", isEqualTo: "sale")
-                        .orderBy("dateTime", descending: true)
-                        .limit(5)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return Center(
-                          child: ListView(
-                            children: <Widget>[
-                              CircularProgressIndicator(),
-                              Padding(
-                                  padding: const EdgeInsets.only(top: 10.0)),
-                              Text("Loading...")
-                            ],
-                          ),
-                        );
-                      }
-                      List sales = List.generate(snapshot.data.documents.length,
-                          (index) => snapshot.data.documents[index]['price']);
-                      int totalSales = sales.fold(0,
-                          (previousValue, current) => previousValue + current);
-                      print(snapshot.data.documents[0]['dateTime']);
-                      return ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: <Widget>[
-                          Container(
-                            color: Colors.teal[100],
-                            width: 340,
-                            child: Column(
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Card(
+                elevation: 8,
+                child: Container(
+                  height: 260,
+                  child: StreamBuilder(
+                      stream: Firestore.instance
+                          .collection("farm_records")
+                          .where("action", isEqualTo: "sale")
+                          .orderBy("dateTime", descending: true)
+                          .limit(5)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return Center(
+                            child: ListView(
                               children: <Widget>[
+                                CircularProgressIndicator(),
                                 Padding(
-                                  padding: const EdgeInsets.all(3.5),
-                                  child: Center(
-                                    child: Text(
-                                      "Recently Sold",
-                                      style: TextStyle(
-                                          color: Theme.of(context).primaryColor,
-                                          fontWeight: FontWeight.bold),
+                                    padding: const EdgeInsets.only(top: 10.0)),
+                                Text("Loading...")
+                              ],
+                            ),
+                          );
+                        }
+
+                        List salesList =
+                            []; //List.generate(snapshot.data.documents.length,
+                        //     (index) => snapshot.data.documents[index]['price']);
+                        List dailySalesList = [];
+                        List monthlySalesList = [];
+                        List yearlySalesList = [];
+                        DateTime currentDate = DateTime.now();
+                        for (int i = 0;
+                            i < snapshot.data.documents.length;
+                            i++) {
+                          DocumentSnapshot documentSnap =
+                              snapshot.data.documents[i];
+                          Timestamp dateStamp = documentSnap['dateTime'];
+//                                print(dateStamp);
+                          DateTime date = dateStamp.toDate();
+
+                          salesList.add(snapshot.data.documents[i]['price']);
+                          if (date.year == currentDate.year) {
+                            yearlySalesList
+                                .add(snapshot.data.documents[i]['price']);
+
+                            if (date.month == currentDate.month) {
+                              monthlySalesList
+                                  .add(snapshot.data.documents[i]['price']);
+
+                              if (date.day == currentDate.day) {
+                                dailySalesList
+                                    .add(snapshot.data.documents[i]['price']);
+                              }
+                            }
+                          }
+                        }
+
+                        int totalSales = salesList.fold(
+                            0,
+                            (previousValue, current) =>
+                                previousValue + current);
+                        int todaySales = dailySalesList.fold(
+                            0,
+                            (previousValue, current) =>
+                                previousValue + current);
+                        int monthSales = monthlySalesList.fold(
+                            0,
+                            (previousValue, current) =>
+                                previousValue + current);
+                        int yearSales = salesList.fold(
+                            0,
+                            (previousValue, current) =>
+                                previousValue + current);
+
+                        return PageView(
+                          children: <Widget>[
+                            Container(
+                              color: Theme.of(context).accentColor,
+                              child: Column(
+                                children: <Widget>[
+                                  Padding(
+                                    padding: const EdgeInsets.all(5),
+                                    child: Center(
+                                      child: Text(
+                                        "Recently Sold",
+                                        style: TextStyle(
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                Divider(),
-                                ListView.builder(
-                                  shrinkWrap: true,
-                                  itemCount: snapshot.data.documents.length + 1,
-                                  itemBuilder: (context, index) {
-                                    if (index == 0) {
-                                      return Padding(
-                                        padding: const EdgeInsets.all(6.0),
-                                        child: Row(
-                                          children: <Widget>[
-                                            Expanded(
+                                  Divider(),
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount:
+                                        snapshot.data.documents.length + 1,
+                                    itemBuilder: (context, index) {
+                                      if (index == 0) {
+                                        return Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: Row(
+                                            children: <Widget>[
+                                              Expanded(
 //                                            flex: 2,
-                                              child: Text("Date",
-                                                  style: TextStyle(
-                                                      color: Colors.teal,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                            ),
-                                            Expanded(
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 8.0),
-                                                child: Text("Time",
+                                                child: Text("Date",
                                                     style: TextStyle(
-                                                        color: Colors.teal,
+                                                        color: Theme.of(context)
+                                                            .primaryColor,
                                                         fontWeight:
                                                             FontWeight.bold)),
                                               ),
-                                            ),
-                                            Expanded(
-//                                            flex: 2,
-                                              child: Text("Product",
-                                                  style: TextStyle(
-                                                      color: Colors.teal,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                            ),
-                                            Expanded(
-                                              child: Container(
-                                                  margin: const EdgeInsets.only(
-                                                      left: 8),
-                                                  child: Text('Qty',
+                                              Expanded(
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          left: 4.0),
+                                                  child: Text("Time",
                                                       style: TextStyle(
-                                                          color: Colors.teal,
-                                                          fontWeight: FontWeight
-                                                              .bold))),
-                                            ),
-                                            Expanded(
-                                              child: Text('Price',
-                                                  style: TextStyle(
-                                                      color: Colors.teal,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                            )
-                                          ],
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .primaryColor,
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                ),
+                                              ),
+                                              Expanded(
+//                                            flex: 2,
+                                                child: Text("Product",
+                                                    style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .primaryColor,
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                              ),
+                                              Expanded(
+                                                child: Container(
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                            left: 4),
+                                                    child: Text('Qty',
+                                                        style: TextStyle(
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .primaryColor,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold))),
+                                              ),
+                                              Expanded(
+                                                child: Text('Price',
+                                                    style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .primaryColor,
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                              )
+                                            ],
+                                          ),
+                                        );
+                                      }
+                                      index -= 1;
+
+                                      DocumentSnapshot documentSnap =
+                                          snapshot.data.documents[index];
+                                      Timestamp dateStamp =
+                                          documentSnap['dateTime'];
+//                                print(dateStamp);
+                                      DateTime date = dateStamp.toDate();
+                                      String formattedDate =
+                                          DateFormat('dd-MMM-yy').format(date);
+                                      String formattedTime =
+                                          DateFormat('kk:mm').format(date);
+
+                                      return Card(
+                                        elevation: 1,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 4.0, vertical: 6),
+                                          child: Row(
+                                            children: <Widget>[
+                                              Expanded(
+//                                            flex: 2,
+                                                child: Text(formattedDate),
+                                              ),
+                                              Expanded(
+                                                child: Container(
+                                                  margin: const EdgeInsets.only(
+                                                      left: 6.0),
+                                                  child: Text(formattedTime),
+                                                ),
+                                              ),
+                                              Expanded(
+//                                            flex: 2,
+                                                child: Text(
+                                                  documentSnap['product'],
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: Container(
+                                                  margin: const EdgeInsets.only(
+                                                      left: 8.0),
+                                                  child: Text(
+                                                      documentSnap['quantity']
+                                                          .toString()),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: Text(
+                                                    documentSnap['price']
+                                                        .toString()),
+                                              )
+                                            ],
+                                          ),
                                         ),
                                       );
-                                    }
-                                    index -= 1;
-
-                                    DocumentSnapshot documentSnap =
-                                        snapshot.data.documents[index];
-                                    Timestamp dateStamp =
-                                        documentSnap['dateTime'];
-//                                print(dateStamp);
-                                    DateTime date = dateStamp.toDate();
-                                    String formattedDate =
-                                        DateFormat('dd-MMM-yy').format(date);
-                                    String formattedTime =
-                                        DateFormat('kk:mm').format(date);
-
-                                    return Card(
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              color: Theme.of(context).accentColor,
+                              child: Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Center(
+                                        child: Text("Total Sales",
+                                            style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .primaryColor,
+                                                fontSize: 25,
+                                                fontWeight: FontWeight.bold))),
+                                  ),
+                                  Divider(),
+                                  Card(
+                                    elevation: 1,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Center(
+                                          child: Text("Today: $todaySales",
+                                              style: TextStyle(
+                                                  color: Theme.of(context)
+                                                      .primaryColor,
+                                                  fontWeight:
+                                                      FontWeight.bold))),
+                                    ),
+                                  ),
+                                  Card(
+                                    elevation: 1,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Center(
+                                          child: Text("This Month: $monthSales",
+                                              style: TextStyle(
+                                                  color: Theme.of(context)
+                                                      .primaryColor,
+                                                  fontWeight:
+                                                      FontWeight.bold))),
+                                    ),
+                                  ),
+                                  Card(
+                                    elevation: 1,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Center(
+                                          child: Text("This Year: $yearSales",
+                                              style: TextStyle(
+                                                  color: Theme.of(context)
+                                                      .primaryColor,
+                                                  fontWeight:
+                                                      FontWeight.bold))),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Card(
                                       elevation: 1,
                                       child: Padding(
-                                        padding: const EdgeInsets.all(6.0),
-                                        child: Row(
-                                          children: <Widget>[
-                                            Expanded(
-//                                            flex: 2,
-                                              child: Text(formattedDate),
-                                            ),
-                                            Expanded(
-                                              child: Container(
-                                                margin: const EdgeInsets.only(
-                                                    left: 8.0),
-                                                child: Text(formattedTime),
-                                              ),
-                                            ),
-                                            Expanded(
-//                                            flex: 2,
-                                              child: Text(
-                                                documentSnap['product'],
-                                              ),
-                                            ),
-                                            Expanded(
-                                              child: Container(
-                                                margin: const EdgeInsets.only(
-                                                    left: 8.0),
-                                                child: Text(
-                                                    documentSnap['quantity']
-                                                        .toString()),
-                                              ),
-                                            ),
-                                            Expanded(
-                                              child: Text(documentSnap['price']
-                                                  .toString()),
-                                            )
-                                          ],
-                                        ),
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Center(
+                                            child: Text("All Time: $totalSales",
+                                                style: TextStyle(
+                                                    color: Theme.of(context)
+                                                        .primaryColor,
+                                                    fontWeight:
+                                                        FontWeight.bold))),
                                       ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            color: Colors.blue,
-                            width: 350,
-                            child:
-                                Center(child: Text("Total Sales: $totalSales")),
-                          )
-                        ],
-                      );
-                    }),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            )
+                          ],
+                        );
+                      }),
+                ),
               ),
             ),
           ),
-          Flexible(
-            fit: FlexFit.loose,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10.0,
-                mainAxisSpacing: 10.0,
-                shrinkWrap: true,
-                children: [
-                  RaisedButton.icon(
-                    color: Colors.teal[100],
-                    icon:
-                        Icon(Icons.book, color: Theme.of(context).primaryColor),
-                    onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => RecordPage()));
-                    },
-                    label: Text("Records"),
+          Expanded(
+            child: Container(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: RaisedButton.icon(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(15.0),
+                                topRight: Radius.circular(15),
+                                bottomLeft: Radius.circular(15))),
+                        color: Theme.of(context).accentColor,
+                        icon: Icon(Icons.book,
+                            color: Theme.of(context).primaryColor),
+                        onPressed: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => RecordPage()));
+                        },
+                        label: Text("Records"),
+                      ),
+                    ),
                   ),
-                  RaisedButton.icon(
-                      color: Colors.teal[100],
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: RaisedButton.icon(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(15.0),
+                                  topRight: Radius.circular(15),
+                                  bottomRight: Radius.circular(15))),
+                          color: Colors.teal[100],
+                          icon: Icon(
+                            Icons.business_center,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => UpdateProductsPage()));
+                          },
+                          label: Text("Update Products")),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: RaisedButton.icon(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(15.0),
+                                bottomRight: Radius.circular(15),
+                                bottomLeft: Radius.circular(15))),
+                        color: Theme.of(context).accentColor,
+                        icon: Icon(
+                          Icons.shopping_cart,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => SellStockPage()));
+                        },
+                        label: Text("Sell"),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                      child: Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: RaisedButton.icon(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.only(
+                              topRight: Radius.circular(15.0),
+                              bottomRight: Radius.circular(15),
+                              bottomLeft: Radius.circular(15))),
+                      color: Theme.of(context).accentColor,
                       icon: Icon(
-                        Icons.business_center,
+                        Icons.add_shopping_cart,
                         color: Theme.of(context).primaryColor,
                       ),
                       onPressed: () {
-                        Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (context) => UpdateProductsPage()));
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => AddStockPage()));
                       },
-                      label: Text("Update Products")),
-                  RaisedButton.icon(
-                    color: Colors.teal[100],
-                    icon: Icon(
-                      Icons.shopping_cart,
-                      color: Theme.of(context).primaryColor,
+                      label: Text("Add Stock"),
                     ),
-                    onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => SellStockPage()));
-                    },
-                    label: Text("Sell"),
-                  ),
-                  RaisedButton.icon(
-                    color: Colors.teal[100],
-                    icon: Icon(
-                      Icons.add_shopping_cart,
-                      color: Theme
-                          .of(context)
-                          .primaryColor,
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => AddStockPage()));
-                    },
-                    label: Text("Add Stock"),
-                  )
-                    ],
-                  ),
-                ),
+                  ))
+                ],
               ),
-//          Expanded(
-//            child: Container(
-//              color: Colors.blue,
-//              child: Row(
-//                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//                children: <Widget>[
-//                  Expanded(
-//                    child: RaisedButton.icon(
-//                      icon: Icon(Icons.book,
-//                          color: Theme.of(context).primaryColor),
-//                      onPressed: () {
-//                        Navigator.of(context).push(MaterialPageRoute(
-//                            builder: (context) => RecordPage()));
-//                      },
-//                      label: Text("Records"),
-//                    ),
-//                  ),
-//                  Expanded(
-//                    child: RaisedButton(
-//                        onPressed: () {
-////                    Navigator.of(context).push(
-////                        MaterialPageRoute(builder: (context) => SalesPage()));
-//                        },
-//                        child: Text("Update Products")),
-//                  )
-//                ],
-//              ),
-//            ),
-//          ),
-//          Expanded(
-//            child: Container(
-//              child: Row(
-//                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//                children: <Widget>[
-//                  Expanded(
-//                    child: RaisedButton.icon(
-//                      icon: Icon(
-//                        Icons.shopping_cart,
-//                        color: Theme.of(context).primaryColor,
-//                      ),
-//                      onPressed: () {
-//                        Navigator.of(context).push(MaterialPageRoute(
-//                            builder: (context) => SellStockPage()));
-//                      },
-//                      label: Text("Sell"),
-//                    ),
-//                  ),
-//                  RaisedButton.icon(
-//                    icon: Icon(
-//                      Icons.add_shopping_cart,
-//                      color: Theme.of(context).primaryColor,
-//                    ),
-//                    onPressed: () {
-//                      Navigator.of(context).push(MaterialPageRoute(
-//                          builder: (context) => AddStockPage()));
-//                    },
-//                    label: Text("Add Stock"),
-//                  )
-//                ],
-//              ),
-//            ),
-//          ),
-            ]));
+            ),
+          ),
+        ]));
   }
 }
 
