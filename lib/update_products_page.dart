@@ -458,14 +458,22 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
             children: [
               IconButton(
                 icon: Icon(Icons.arrow_back_ios),
-                onPressed: () {
+                // button is grey and disabled if we on the first page
+                color: currentPage == 0 ? Colors.grey : Theme
+                    .of(context)
+                    .primaryColor,
+                onPressed: currentPage == 0 ? null : () {
                   print("Back Clicked");
                   moveToPage(pageIndex: --currentPage);
                 },
               ),
               IconButton(
                 icon: Icon(Icons.arrow_forward_ios),
-                onPressed: () {
+                // button is grey and disabled if we on the last page
+                color: currentPage == (options.length - 1) ? Colors.grey : Theme
+                    .of(context)
+                    .primaryColor,
+                onPressed: currentPage == (options.length - 1) ? null : () {
                   print("Front Clicked");
                   moveToPage(pageIndex: ++currentPage);
                 },

@@ -16,6 +16,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int curtPage = 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,8 +26,8 @@ class _HomePageState extends State<HomePage> {
         body:
             Column(mainAxisAlignment: MainAxisAlignment.spaceAround, children: <
                 Widget>[
-          Expanded(
-            flex: 2,
+          Flexible(
+            flex: 0,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Card(
@@ -54,17 +56,17 @@ class _HomePageState extends State<HomePage> {
                         }
 
                         List salesList =
-                            []; //List.generate(snapshot.data.documents.length,
+                        []; //List.generate(snapshot.data.documents.length,
                         //     (index) => snapshot.data.documents[index]['price']);
                         List dailySalesList = [];
                         List monthlySalesList = [];
                         List yearlySalesList = [];
                         DateTime currentDate = DateTime.now();
                         for (int i = 0;
-                            i < snapshot.data.documents.length;
-                            i++) {
+                        i < snapshot.data.documents.length;
+                        i++) {
                           DocumentSnapshot documentSnap =
-                              snapshot.data.documents[i];
+                          snapshot.data.documents[i];
                           Timestamp dateStamp = documentSnap['dateTime'];
 //                                print(dateStamp);
                           DateTime date = dateStamp.toDate();
@@ -88,241 +90,320 @@ class _HomePageState extends State<HomePage> {
 
                         int totalSales = salesList.fold(
                             0,
-                            (previousValue, current) =>
-                                previousValue + current);
+                                (previousValue, current) =>
+                            previousValue + current);
                         int todaySales = dailySalesList.fold(
                             0,
-                            (previousValue, current) =>
-                                previousValue + current);
+                                (previousValue, current) =>
+                            previousValue + current);
                         int monthSales = monthlySalesList.fold(
                             0,
-                            (previousValue, current) =>
-                                previousValue + current);
+                                (previousValue, current) =>
+                            previousValue + current);
                         int yearSales = salesList.fold(
                             0,
-                            (previousValue, current) =>
-                                previousValue + current);
+                                (previousValue, current) =>
+                            previousValue + current);
 
-                        return PageView(
-                          children: <Widget>[
-                            Container(
-                              color: Theme.of(context).accentColor,
-                              child: Column(
-                                children: <Widget>[
-                                  Padding(
-                                    padding: const EdgeInsets.all(5),
-                                    child: Center(
-                                      child: Text(
-                                        "Recently Sold",
-                                        style: TextStyle(
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  ),
-                                  Divider(),
-                                  ListView.builder(
-                                    shrinkWrap: true,
-                                    itemCount:
-                                        snapshot.data.documents.length + 1,
-                                    itemBuilder: (context, index) {
-                                      if (index == 0) {
-                                        return Padding(
-                                          padding: const EdgeInsets.all(4.0),
-                                          child: Row(
-                                            children: <Widget>[
-                                              Expanded(
-//                                            flex: 2,
-                                                child: Text("Date",
-                                                    style: TextStyle(
-                                                        color: Theme.of(context)
-                                                            .primaryColor,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                              Expanded(
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          left: 4.0),
-                                                  child: Text("Time",
-                                                      style: TextStyle(
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .primaryColor,
-                                                          fontWeight:
-                                                              FontWeight.bold)),
-                                                ),
-                                              ),
-                                              Expanded(
-//                                            flex: 2,
-                                                child: Text("Product",
-                                                    style: TextStyle(
-                                                        color: Theme.of(context)
-                                                            .primaryColor,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                              Expanded(
-                                                child: Container(
-                                                    margin:
-                                                        const EdgeInsets.only(
-                                                            left: 4),
-                                                    child: Text('Qty',
-                                                        style: TextStyle(
-                                                            color: Theme.of(
-                                                                    context)
-                                                                .primaryColor,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold))),
-                                              ),
-                                              Expanded(
-                                                child: Text('Price',
-                                                    style: TextStyle(
-                                                        color: Theme.of(context)
-                                                            .primaryColor,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              )
-                                            ],
-                                          ),
-                                        );
-                                      }
-                                      index -= 1;
+                        PageController _pageController = PageController(
+                            initialPage: curtPage);
 
-                                      DocumentSnapshot documentSnap =
-                                          snapshot.data.documents[index];
-                                      Timestamp dateStamp =
-                                          documentSnap['dateTime'];
-//                                print(dateStamp);
-                                      DateTime date = dateStamp.toDate();
-                                      String formattedDate =
-                                          DateFormat('dd-MMM-yy').format(date);
-                                      String formattedTime =
-                                          DateFormat('kk:mm').format(date);
-
-                                      return Card(
-                                        elevation: 1,
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 4.0, vertical: 6),
-                                          child: Row(
-                                            children: <Widget>[
-                                              Expanded(
-//                                            flex: 2,
-                                                child: Text(formattedDate),
-                                              ),
-                                              Expanded(
-                                                child: Container(
-                                                  margin: const EdgeInsets.only(
-                                                      left: 6.0),
-                                                  child: Text(formattedTime),
-                                                ),
-                                              ),
-                                              Expanded(
-//                                            flex: 2,
-                                                child: Text(
-                                                  documentSnap['product'],
-                                                ),
-                                              ),
-                                              Expanded(
-                                                child: Container(
-                                                  margin: const EdgeInsets.only(
-                                                      left: 8.0),
-                                                  child: Text(
-                                                      documentSnap['quantity']
-                                                          .toString()),
-                                                ),
-                                              ),
-                                              Expanded(
-                                                child: Text(
-                                                    documentSnap['price']
-                                                        .toString()),
-                                              )
-                                            ],
+                        return Stack(
+                          children: [
+                            PageView(
+                              controller: _pageController,
+                              onPageChanged: (index) {
+                                setState(() {
+                                  curtPage = index;
+                                });
+                              },
+                              children: <Widget>[
+                                Container(
+                                  color: Theme
+                                      .of(context)
+                                      .accentColor,
+                                  child: Column(
+                                    children: <Widget>[
+                                      Padding(
+                                        padding: const EdgeInsets.all(5),
+                                        child: Center(
+                                          child: Text(
+                                            "Recently Sold",
+                                            style: TextStyle(
+                                                color:
+                                                Theme
+                                                    .of(context)
+                                                    .primaryColor,
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold),
                                           ),
                                         ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              color: Theme.of(context).accentColor,
-                              child: Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(5.0),
-                                    child: Center(
-                                        child: Text("Total Sales",
-                                            style: TextStyle(
-                                                color: Theme.of(context)
-                                                    .primaryColor,
-                                                fontSize: 25,
-                                                fontWeight: FontWeight.bold))),
-                                  ),
-                                  Divider(),
-                                  Card(
-                                    elevation: 1,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Center(
-                                          child: Text("Today: $todaySales",
-                                              style: TextStyle(
-                                                  color: Theme.of(context)
-                                                      .primaryColor,
-                                                  fontWeight:
-                                                      FontWeight.bold))),
-                                    ),
-                                  ),
-                                  Card(
-                                    elevation: 1,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Center(
-                                          child: Text("This Month: $monthSales",
-                                              style: TextStyle(
-                                                  color: Theme.of(context)
-                                                      .primaryColor,
-                                                  fontWeight:
-                                                      FontWeight.bold))),
-                                    ),
-                                  ),
-                                  Card(
-                                    elevation: 1,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Center(
-                                          child: Text("This Year: $yearSales",
-                                              style: TextStyle(
-                                                  color: Theme.of(context)
-                                                      .primaryColor,
-                                                  fontWeight:
-                                                      FontWeight.bold))),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Card(
-                                      elevation: 1,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Center(
-                                            child: Text("All Time: $totalSales",
-                                                style: TextStyle(
-                                                    color: Theme.of(context)
-                                                        .primaryColor,
-                                                    fontWeight:
-                                                        FontWeight.bold))),
                                       ),
-                                    ),
-                                  )
-                                ],
-                              ),
-                            )
+                                      Divider(),
+                                      ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount:
+                                        snapshot.data.documents.length + 1,
+                                        itemBuilder: (context, index) {
+                                          if (index == 0) {
+                                            return Padding(
+                                              padding: const EdgeInsets.all(
+                                                  4.0),
+                                              child: Row(
+                                                children: <Widget>[
+                                                  Expanded(
+//                                            flex: 2,
+                                                    child: Padding(
+                                                      padding: const EdgeInsets
+                                                          .only(left: 4),
+                                                      child: Text("Date",
+                                                          style: TextStyle(
+                                                              color: Theme
+                                                                  .of(context)
+                                                                  .primaryColor,
+                                                              fontWeight:
+                                                              FontWeight.bold)),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: Padding(
+                                                      padding:
+                                                      const EdgeInsets.only(
+                                                          left: 4.0),
+                                                      child: Text("Time",
+                                                          style: TextStyle(
+                                                              color:
+                                                              Theme
+                                                                  .of(context)
+                                                                  .primaryColor,
+                                                              fontWeight:
+                                                              FontWeight.bold)),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+//                                            flex: 2,
+                                                    child: Text("Product",
+                                                        style: TextStyle(
+                                                            color: Theme
+                                                                .of(context)
+                                                                .primaryColor,
+                                                            fontWeight:
+                                                            FontWeight.bold)),
+                                                  ),
+                                                  Expanded(
+                                                    child: Container(
+                                                        margin:
+                                                        const EdgeInsets.only(
+                                                            left: 4),
+                                                        child: Text('Qty',
+                                                            style: TextStyle(
+                                                                color: Theme
+                                                                    .of(
+                                                                    context)
+                                                                    .primaryColor,
+                                                                fontWeight:
+                                                                FontWeight
+                                                                    .bold))),
+                                                  ),
+                                                  Expanded(
+                                                    child: Text('Price',
+                                                        style: TextStyle(
+                                                            color: Theme
+                                                                .of(context)
+                                                                .primaryColor,
+                                                            fontWeight:
+                                                            FontWeight.bold)),
+                                                  )
+                                                ],
+                                              ),
+                                            );
+                                          }
+                                          index -= 1;
+
+                                          DocumentSnapshot documentSnap =
+                                          snapshot.data.documents[index];
+                                          Timestamp dateStamp =
+                                          documentSnap['dateTime'];
+//                                print(dateStamp);
+                                          DateTime date = dateStamp.toDate();
+                                          String formattedDate =
+                                          DateFormat('dd-MMM-yy').format(date);
+                                          String formattedTime =
+                                          DateFormat('kk:mm').format(date);
+
+                                          return Card(
+                                            elevation: 1,
+                                            child: Padding(
+                                              padding: const EdgeInsets
+                                                  .symmetric(
+                                                  horizontal: 4.0, vertical: 6),
+                                              child: Row(
+                                                children: <Widget>[
+                                                  Flexible(
+                                                    // flex: 2,
+                                                    child: Text(formattedDate),
+                                                  ),
+                                                  Expanded(
+                                                    child: Container(
+                                                      margin: const EdgeInsets
+                                                          .only(
+                                                          left: 6.0),
+                                                      child: Text(
+                                                          formattedTime),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+//                                            flex: 2,
+                                                    child: Text(
+                                                      documentSnap['product'],
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: Container(
+                                                      margin: const EdgeInsets
+                                                          .only(
+                                                          left: 8.0),
+                                                      child: Text(
+                                                          documentSnap['quantity']
+                                                              .toString()),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: Text(
+                                                        documentSnap['price']
+                                                            .toString()),
+                                                  )
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  color: Theme
+                                      .of(context)
+                                      .accentColor,
+                                  child: Column(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(5.0),
+                                        child: Center(
+                                            child: Text("Total Sales",
+                                                style: TextStyle(
+                                                    color: Theme
+                                                        .of(context)
+                                                        .primaryColor,
+                                                    fontSize: 25,
+                                                    fontWeight: FontWeight
+                                                        .bold))),
+                                      ),
+                                      Divider(),
+                                      Card(
+                                        elevation: 1,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Center(
+                                              child: Text("Today: $todaySales",
+                                                  style: TextStyle(
+                                                      color: Theme
+                                                          .of(context)
+                                                          .primaryColor,
+                                                      fontWeight:
+                                                      FontWeight.bold))),
+                                        ),
+                                      ),
+                                      Card(
+                                        elevation: 1,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Center(
+                                              child: Text(
+                                                  "This Month: $monthSales",
+                                                  style: TextStyle(
+                                                      color: Theme
+                                                          .of(context)
+                                                          .primaryColor,
+                                                      fontWeight:
+                                                      FontWeight.bold))),
+                                        ),
+                                      ),
+                                      Card(
+                                        elevation: 1,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Center(
+                                              child: Text(
+                                                  "This Year: $yearSales",
+                                                  style: TextStyle(
+                                                      color: Theme
+                                                          .of(context)
+                                                          .primaryColor,
+                                                      fontWeight:
+                                                      FontWeight.bold))),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Card(
+                                          margin: EdgeInsets.only(bottom: 8,
+                                              top: 4,
+                                              left: 4,
+                                              right: 4),
+                                          elevation: 1,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Center(
+                                                child: Text(
+                                                    "All Time: $totalSales",
+                                                    style: TextStyle(
+                                                        color: Theme
+                                                            .of(context)
+                                                            .primaryColor,
+                                                        fontWeight:
+                                                        FontWeight.bold))),
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                IconButton(
+                                  iconSize: 18,
+                                  icon: Icon(Icons.arrow_back_ios),
+                                  alignment: Alignment.centerRight,
+                                  // button is grey and disabled if we on the first page
+                                  onPressed: curtPage == 0 ? null : () {
+                                    _pageController.animateToPage(--curtPage,
+                                        duration: Duration(milliseconds: 500),
+                                        curve: Curves.bounceInOut);
+                                  },
+                                ),
+                                IconButton(
+                                    iconSize: 18,
+                                    alignment: Alignment.centerLeft,
+                                    icon: Icon(Icons.arrow_forward_ios),
+                                    onPressed: curtPage == 1 ? null : () {
+                                      _pageController.animateToPage(++curtPage,
+                                          duration: Duration(milliseconds: 500),
+                                          curve: Curves.bounceInOut);
+                                    }
+                                  // color: Colors.white,
+                                  // button is grey and disabled if we on the last page
+                                  // color: currentPage == (options.length-1) ? Colors.grey : Theme.of(context).primaryColor,
+                                  // onPressed: currentPage == (options.length-1) ? null : () {
+                                  //   print("Front Clicked");
+                                  //   moveToPage(pageIndex: ++currentPage);
+                                  // },
+                                ),
+                              ],
+                            ),
                           ],
                         );
                       }),
@@ -411,25 +492,25 @@ class _HomePageState extends State<HomePage> {
                   ),
                   Expanded(
                       child: Padding(
-                    padding: const EdgeInsets.all(6.0),
-                    child: RaisedButton.icon(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                              topRight: Radius.circular(15.0),
-                              bottomRight: Radius.circular(15),
-                              bottomLeft: Radius.circular(15))),
-                      color: Theme.of(context).accentColor,
-                      icon: Icon(
-                        Icons.add_shopping_cart,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => AddStockPage()));
-                      },
-                      label: Text("Add Stock"),
-                    ),
-                  ))
+                        padding: const EdgeInsets.all(6.0),
+                        child: RaisedButton.icon(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.only(
+                                  topRight: Radius.circular(15.0),
+                                  bottomRight: Radius.circular(15),
+                                  bottomLeft: Radius.circular(15))),
+                          color: Theme.of(context).accentColor,
+                          icon: Icon(
+                            Icons.add_shopping_cart,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => AddStockPage()));
+                          },
+                          label: Text("Add Stock"),
+                        ),
+                      ))
                 ],
               ),
             ),
