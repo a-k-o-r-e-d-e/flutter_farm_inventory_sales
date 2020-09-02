@@ -1,3 +1,4 @@
+import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_farm_inventory/auth.dart';
 import 'package:flutter_farm_inventory/home_page.dart';
@@ -11,11 +12,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => AuthFireBase(),
-      child: MaterialApp(
-        title: 'Flutter Demo',
-        theme: ThemeData()
-            .copyWith(primaryColor: Colors.teal, accentColor: Colors.teal[100]),
-        home: WelcomePage(),
+      child: ConnectivityAppWrapper(
+        app: MaterialApp(
+          title: 'Flutter Demo',
+          theme: ThemeData().copyWith(
+              primaryColor: Colors.teal, accentColor: Colors.teal[100]),
+          home: WelcomePage(),
+        ),
       ),
     );
   }

@@ -1,8 +1,10 @@
 import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_farm_inventory/add_stock_sell_stock_pages.dart';
+import 'package:flutter_farm_inventory/util_functions.dart';
 
 class UpdateProductsPage extends StatefulWidget {
   @override
@@ -12,9 +14,15 @@ class UpdateProductsPage extends StatefulWidget {
 class _UpdateProductsPageState extends State<UpdateProductsPage> {
   var dropDownVal;
   List<String> options = ["Add New Product", "Update Product Price"];
-  TextEditingController _quanTextController = TextEditingController();
+  TextEditingController _quantityTextController = TextEditingController();
   TextEditingController _priceTextController = TextEditingController();
   TextEditingController _productNameTextController = TextEditingController();
+
+  GlobalKey<FormState> updatePriceFormKey = GlobalKey<FormState>();
+  GlobalKey<FormState> addProductFormKey = GlobalKey<FormState>();
+
+  Map<String, DocumentSnapshot> documents = HashMap();
+  ProductsDropdown productsDropdown;
 
   int currentPage = 0;
   PageController _pageController;
@@ -24,11 +32,14 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
     super.initState();
     dropDownVal = options[0];
     _pageController = PageController(initialPage: currentPage);
+    productsDropdown = ProductsDropdown(
+      products: documents,
+    );
   }
 
   @override
   void dispose() {
-    _quanTextController.dispose();
+    _quantityTextController.dispose();
     _priceTextController.dispose();
     _productNameTextController.dispose();
 
@@ -64,7 +75,7 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                         val.isEmpty ? "Product Name is required" : null),
                 buildTextFormField(context,
                     hintText: "Enter Available Quantity",
-                    textController: _quanTextController,
+                    textController: _quantityTextController,
                     textInputType: TextInputType.number,
                     labelText: "Quantity",
                     validator: (String val) =>
@@ -85,7 +96,7 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                     btnText: "Add New Product",
                     btnIcon: Icons.add_shopping_cart,
                     onBtnPressed: () {
-                      _handleAddProduct(formKey);
+                      submitForm(context, formKey, _handleAddProduct);
                     }),
               ],
             ),
@@ -97,10 +108,6 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
 
   _updateProductPrice(
       BuildContext context, Map<String, DocumentSnapshot> documents) {
-    GlobalKey<FormState> formKey = GlobalKey<FormState>();
-    ProductsDropdown productsDropdown = ProductsDropdown(
-      products: documents,
-    );
 
     return SingleChildScrollView(
       child: Card(
@@ -110,7 +117,7 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Form(
-            key: formKey,
+            key: updatePriceFormKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -153,9 +160,6 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                                           .products[snapshot.data]
                                       ['currentPrice']
                                           .toString()
-//                                      products[snapshot.data]
-//                                      ['currentPrice']
-//                                          .toString(),
                                       );
                                     }
                                     return Text(
@@ -180,13 +184,11 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                 Divider(),
                 buildButton(
                     context: context,
-                    btnText: "Add Product Price",
+                    btnText: "Update Product Price",
                     btnIcon: Icons.update,
                     onBtnPressed: () {
-                      _handleProductPriceUpdate(
-                        productsDropdown,
-                        formKey,
-                      );
+                      submitForm(context, updatePriceFormKey,
+                          _handleProductPriceUpdate);
                     }),
               ],
             ),
@@ -196,22 +198,22 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
     );
   }
 
-  Future<void> _handleAddProduct(GlobalKey<FormState> formKey) async {
-    if (formKey.currentState.validate()) {
-      var productName = _productNameTextController.text;
-      // price & quantity columns should be numeric values
-      var productPrice = int.parse(_priceTextController.text);
-      var productQuantity = int.parse(_quanTextController.text);
+  // Internet Connectivity test and Form Validation should have been done already before calling this method
+  void _handleAddProduct() async {
+    var productName = _productNameTextController.text;
+    // price & quantity columns should be numeric values
+    var productPrice = int.parse(_priceTextController.text);
+    var productQuantity = int.parse(_quantityTextController.text);
 
-      await Firestore.instance
-          .collection('inventory')
-          .where('itemName', isEqualTo: productName)
-          .getDocuments()
-          .then((value) {
-        if (value.documents.isNotEmpty) {
-          // that is product already exist in Inventory
-          showDialog(
-              context: context,
+    await Firestore.instance
+        .collection('inventory')
+        .where('itemName', isEqualTo: productName)
+        .getDocuments()
+        .then((value) {
+      if (value.documents.isNotEmpty) {
+        // that is product already exist in Inventory
+        showDialog(
+            context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
                   content: Container(
@@ -225,7 +227,7 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                               child: Text("Ok!"),
                               onPressed: () {
                                 Navigator.pop(context);
-                                formKey.currentState.reset();
+                                addProductFormKey.currentState.reset();
                               }),
                         )
                       ],
@@ -270,7 +272,7 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                                   child: Text("Ok!"),
                                   onPressed: () {
                                     Navigator.pop(context);
-                                    formKey.currentState.reset();
+                                    addProductFormKey.currentState.reset();
                                   }),
                             )
                           ],
@@ -294,7 +296,7 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                                     child: Text("Ok!"),
                                     onPressed: () {
                                       Navigator.pop(context);
-                                      formKey.currentState.reset();
+                                      addProductFormKey.currentState.reset();
                                     }),
                               )
                             ],
@@ -302,26 +304,23 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                         ),
                       );
                     });
-              });
-        }
-      });
-    }
+          });
+      }
+    });
   }
 
-  void _handleProductPriceUpdate(
-      ProductsDropdown productsDropdown, GlobalKey<FormState> formKey) {
-    if (formKey.currentState.validate()) {
-      // price column should be a numeric value
-      var productPrice = int.parse(_priceTextController.text);
-      var productName = _productNameTextController.text;
 
-      var prodCollection = Firestore.instance.collection('farm_records');
-//      Map<String, dynamic> productMap = Map();
-//      productMap.putIfAbsent('currentPrice', () => productPrice);
+  // Internet Connectivity test and Form Validation should have been done already before calling this method
+  void _handleProductPriceUpdate() {
+    // price column should be a numeric value
+    var productPrice = int.parse(_priceTextController.text);
+    var productName = _productNameTextController.text;
 
-      var documentSnapshot =
-      productsDropdown.products[productsDropdown.selectedItem];
-      var oldPrice = documentSnapshot['currentPrice'];
+    var prodCollection = Firestore.instance.collection('farm_records');
+
+    var documentSnapshot =
+    productsDropdown.products[productsDropdown.selectedItem];
+    var oldPrice = documentSnapshot['currentPrice'];
       Firestore.instance
           .runTransaction((transaction) async {
             DocumentSnapshot freshSnap =
@@ -355,7 +354,7 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                               child: Text("Ok!"),
                               onPressed: () {
                                 Navigator.pop(context);
-                                formKey.currentState.reset();
+                                updatePriceFormKey.currentState.reset();
                               }),
                         )
                       ],
@@ -379,7 +378,7 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                                 child: Text("Ok!"),
                                 onPressed: () {
                                   Navigator.pop(context);
-                                  formKey.currentState.reset();
+                                  updatePriceFormKey.currentState.reset();
                                 }),
                           )
                         ],
@@ -389,7 +388,6 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                 });
       });
     }
-  }
 
   moveToPage({int pageIndex}) {
     if (pageIndex < options.length) {
@@ -404,106 +402,111 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
 
   @override
   Widget build(BuildContext context) {
-    Map<String, DocumentSnapshot> documents = HashMap();
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Update Products'),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-//              color: Theme.of(context).accentColor,
-              child: DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                    prefixIcon: Padding(
-                        padding: EdgeInsets.only(right: 15, left: 15, top: 15),
-                        child: Text(
-                          "Select Action:",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).primaryColor),
-                        ))),
-                hint: Text(
-                  "Select Action",
+      body: ConnectivityWidgetWrapper(
+        decoration: BoxDecoration(color: Colors.purple,
+            gradient: LinearGradient(colors: [Colors.red, Colors.cyan])),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Card(
+                child: DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                      prefixIcon: Padding(
+                          padding: EdgeInsets.only(
+                              right: 15, left: 15, top: 15),
+                          child: Text(
+                            "Select Action:",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme
+                                    .of(context)
+                                    .primaryColor),
+                          ))),
+                  hint: Text(
+                    "Select Action",
+                  ),
+                  value: dropDownVal,
+                  elevation: 5,
+                  items: options.map((String value) {
+                    return DropdownMenuItem(value: value, child: Text(value));
+                  }).toList(),
+                  onChanged: (String newValue) {
+                    controller.add(newValue);
+                    setState(() {
+                      int newPageIndex = options.indexOf(newValue);
+                      _pageController.animateToPage(newPageIndex,
+                          duration: Duration(milliseconds: 500),
+                          curve: Curves.bounceInOut);
+                      this.dropDownVal = newValue;
+                    });
+                  },
+                  validator: (value) =>
+                  value == null
+                      ? "Field required: Please select item from dropdown"
+                      : null,
                 ),
-                value: dropDownVal,
-                elevation: 5,
-                items: options.map((String value) {
-                  return DropdownMenuItem(value: value, child: Text(value));
-                }).toList(),
-                onChanged: (String newValue) {
-                  controller.add(newValue);
-                  setState(() {
-                    int newPageIndex = options.indexOf(newValue);
-                    _pageController.animateToPage(newPageIndex,
-                        duration: Duration(milliseconds: 500),
-                        curve: Curves.bounceInOut);
-                    this.dropDownVal = newValue;
-                  });
-                },
-                validator: (value) =>
-                value == null
-                    ? "Field required: Please select item from dropdown"
-                    : null,
               ),
             ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back_ios),
-                // button is grey and disabled if we on the first page
-                color: currentPage == 0 ? Colors.grey : Theme
-                    .of(context)
-                    .primaryColor,
-                onPressed: currentPage == 0 ? null : () {
-                  print("Back Clicked");
-                  moveToPage(pageIndex: --currentPage);
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.arrow_forward_ios),
-                // button is grey and disabled if we on the last page
-                color: currentPage == (options.length - 1) ? Colors.grey : Theme
-                    .of(context)
-                    .primaryColor,
-                onPressed: currentPage == (options.length - 1) ? null : () {
-                  print("Front Clicked");
-                  moveToPage(pageIndex: ++currentPage);
-                },
-              ),
-            ],
-          ),
-          Flexible(
-            fit: FlexFit.loose,
-            child: Padding(
-              padding: EdgeInsets.all(8.0),
-//              child: _updateProductPrice(context, documents),
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    currentPage = index;
-
-                    if (index < options.length) {
-                      dropDownVal = options.elementAt(index);
-                    }
-                  });
-                },
-                children: [
-                  _addNewProductCard(context),
-                  _updateProductPrice(context, documents),
-                ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.arrow_back_ios),
+                  // button is grey and disabled if we on the first page
+                  color: currentPage == 0 ? Colors.grey : Theme
+                      .of(context)
+                      .primaryColor,
+                  onPressed: currentPage == 0 ? null : () {
+                    print("Back Clicked");
+                    moveToPage(pageIndex: --currentPage);
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.arrow_forward_ios),
+                  // button is grey and disabled if we on the last page
+                  color: currentPage == (options.length - 1)
+                      ? Colors.grey
+                      : Theme
+                      .of(context)
+                      .primaryColor,
+                  onPressed: currentPage == (options.length - 1) ? null : () {
+                    print("Front Clicked");
+                    moveToPage(pageIndex: ++currentPage);
+                  },
+                ),
+              ],
+            ),
+            Flexible(
+              fit: FlexFit.loose,
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      currentPage = index;
+                      if (index < options.length) {
+                        dropDownVal = options.elementAt(index);
+                      }
+                    });
+                  },
+                  children: [
+                    _addNewProductCard(context),
+                    _updateProductPrice(context, documents),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

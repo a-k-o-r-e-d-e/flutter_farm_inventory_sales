@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/material.dart';
+
+import 'util_functions.dart';
 
 var dropDownValue;
 StreamController<String> controller = StreamController<String>.broadcast();
@@ -23,27 +26,52 @@ class _AddStockPageState extends State<AddStockPage> {
     super.dispose();
   }
 
-  void _handleAddStock() {
-    if (formKey.currentState.validate()) {
-      var quantity = int.parse(_quantityTextController.text);
+  // Internet Connectivity test and Form Validation should have been done already before calling this method
+  void _handleAddStock() async {
+    var quantity = int.parse(_quantityTextController.text);
 
-      var farmRecordsCollection = Firestore.instance.collection('farm_records');
-      Map<String, dynamic> farmRecordsMap = Map();
-      farmRecordsMap.putIfAbsent('action', () => "addStock");
-      farmRecordsMap.putIfAbsent('product', () => dropDownValue);
-      farmRecordsMap.putIfAbsent('quantity', () => quantity);
-      farmRecordsMap.putIfAbsent('dateTime', () => DateTime.now().toUtc());
+    var farmRecordsCollection = Firestore.instance.collection('farm_records');
+    Map<String, dynamic> farmRecordsMap = Map();
+    farmRecordsMap.putIfAbsent('action', () => "addStock");
+    farmRecordsMap.putIfAbsent('product', () => dropDownValue);
+    farmRecordsMap.putIfAbsent('quantity', () => quantity);
+    farmRecordsMap.putIfAbsent('dateTime', () => DateTime.now().toUtc());
 
-      var documentSnapshot = documents[dropDownValue];
-      Firestore.instance
-          .runTransaction((transaction) async {
-            DocumentSnapshot freshSnap =
-                await transaction.get(documentSnapshot.reference);
-            await transaction.update(freshSnap.reference,
-                {'quantity': documentSnapshot['quantity'] + quantity});
-            farmRecordsCollection.add(farmRecordsMap);
-          })
-          .whenComplete(() => showDialog(
+    var documentSnapshot = documents[dropDownValue];
+    Firestore.instance
+        .runTransaction((transaction) async {
+          DocumentSnapshot freshSnap =
+              await transaction.get(documentSnapshot.reference);
+          await transaction.update(freshSnap.reference,
+              {'quantity': documentSnapshot['quantity'] + quantity});
+          farmRecordsCollection.add(farmRecordsMap);
+        })
+        .whenComplete(() => showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Container(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                          "${_quantityTextController.text} $dropDownValue Successfully added to Inventory!"),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: RaisedButton(
+                            child: Text("Ok!"),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              formKey.currentState.reset();
+                            }),
+                      )
+                    ],
+                  ),
+                ),
+              );
+            }))
+        .catchError((onError) {
+          showDialog(
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
@@ -51,8 +79,7 @@ class _AddStockPageState extends State<AddStockPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Text(
-                            "${_quantityTextController.text} $dropDownValue Successfully added to Inventory!"),
+                        Text("Addition to Inventory failed!!"),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: RaisedButton(
@@ -66,76 +93,66 @@ class _AddStockPageState extends State<AddStockPage> {
                     ),
                   ),
                 );
-              }))
-          .catchError((onError) {
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    content: Container(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text("Addition to Inventory failed!!"),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: RaisedButton(
-                                child: Text("Ok!"),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  formKey.currentState.reset();
-                                }),
-                          )
-                        ],
-                      ),
-                    ),
-                  );
-                });
-          });
-    }
+              });
+        });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Add Stock")),
-      body: SingleChildScrollView(
+      body: ConnectivityWidgetWrapper(
+        decoration: BoxDecoration(color: Colors.purple,
+            gradient: LinearGradient(colors: [Colors.red, Colors.cyan])),
         child: Column(
           children: <Widget>[
-            _buildAvailableStockCard(context),
+            Expanded(flex: 1, child: _buildAvailableStockCard(context)),
             SizedBox(
               height: 50,
             ),
-            Card(
-              margin: EdgeInsets.all(6.0),
-              child: Container(
-                color: Colors.teal[100],
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    children: <Widget>[
-                      ProductsDropdown(
-                        products: documents,
+            Expanded(
+              flex: 2,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Card(
+                      margin: EdgeInsets.all(6.0),
+                      child: Container(
+                        color: Theme
+                            .of(context)
+                            .accentColor,
+                        child: Form(
+                          key: formKey,
+                          child: Column(
+                            children: <Widget>[
+                              ProductsDropdown(
+                                products: documents,
+                              ),
+                              buildTextFormField(context,
+                                  hintText: "Enter Quantity",
+                                  textInputType: TextInputType.number,
+                                  labelText: "Quantity",
+                                  validator: (String val) =>
+                                  isInvalidNum(val)
+                                      ? "Please enter valid quantity"
+                                      : null,
+                                  textController: _quantityTextController),
+                            ],
+                          ),
+                        ),
                       ),
-                      buildTextFormField(context,
-                          hintText: "Enter Quantity",
-                          textInputType: TextInputType.number,
-                          labelText: "Quantity",
-                          validator: (String val) =>
-                          isInvalidNum(val)
-                              ? "Please enter valid quantity"
-                              : null,
-                          textController: _quantityTextController),
-                    ],
-                  ),
+                    ),
+                    buildButton(
+                        context: context,
+                        btnText: "Add Items",
+                        btnIcon: Icons.add_shopping_cart,
+                        onBtnPressed: () {
+                          submitForm(context, formKey, _handleAddStock);
+                        }),
+                  ],
                 ),
               ),
             ),
-            buildButton(
-                context: context,
-                btnText: "Add Items",
-                btnIcon: Icons.add_shopping_cart,
-                onBtnPressed: _handleAddStock),
           ],
         ),
       ),
@@ -173,51 +190,27 @@ class _SellStockPageState extends State<SellStockPage> {
     stream = controller.stream.asBroadcastStream();
   }
 
-  void _handleSellStock() {
+  // Internet Connectivity test and Form Validation should have been done already before calling this method
+  void _handleSellStock() async {
     final form = formKey.currentState;
-    print(dropDownValue != null);
-    if (form.validate()) {
-      var quantity = int.parse(_quanTextController.text);
-      var stockDocumentSnapshot = products[dropDownValue];
-      var salesCollection = Firestore.instance.collection('farm_records');
-      Map<String, dynamic> salesMap = Map();
-      salesMap.putIfAbsent('action', () => 'sale');
-      salesMap.putIfAbsent('product', () => dropDownValue);
-      salesMap.putIfAbsent('price', () => netPriceText);
-      salesMap.putIfAbsent('quantity', () => quantity);
-      salesMap.putIfAbsent('dateTime', () => DateTime.now().toUtc());
-      print(stockDocumentSnapshot['itemName']);
-      Firestore.instance.runTransaction((transaction) async {
-        DocumentSnapshot freshSnap =
-        await transaction.get(stockDocumentSnapshot.reference);
-        await transaction.update(freshSnap.reference,
-            {'quantity': stockDocumentSnapshot['quantity'] - quantity});
-        salesCollection.add(salesMap);
-      }).whenComplete(() =>
-          showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  content: Container(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text("${_quanTextController
-                            .text} $dropDownValue Successfully sold for $netPriceText Naira"),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: RaisedButton(
-                              child: Text("Ok!"),
-                              onPressed: () {
-                                Navigator.pop(context);
-                                form.reset();
-                              }),
-                        )
-                      ],
-                    ),
-                  ),
-                );
-              })).catchError((error, stackTrace) {
+
+    var quantity = int.parse(_quanTextController.text);
+    var stockDocumentSnapshot = products[dropDownValue];
+    var salesCollection = Firestore.instance.collection('farm_records');
+    Map<String, dynamic> salesMap = Map();
+    salesMap.putIfAbsent('action', () => 'sale');
+    salesMap.putIfAbsent('product', () => dropDownValue);
+    salesMap.putIfAbsent('price', () => netPriceText);
+    salesMap.putIfAbsent('quantity', () => quantity);
+    salesMap.putIfAbsent('dateTime', () => DateTime.now().toUtc());
+    print(stockDocumentSnapshot['itemName']);
+    Firestore.instance.runTransaction((transaction) async {
+      DocumentSnapshot freshSnap =
+      await transaction.get(stockDocumentSnapshot.reference);
+      await transaction.update(freshSnap.reference,
+          {'quantity': stockDocumentSnapshot['quantity'] - quantity});
+      salesCollection.add(salesMap);
+    }).whenComplete(() =>
         showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -226,7 +219,8 @@ class _SellStockPageState extends State<SellStockPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Text("Transaction failed!!"),
+                      Text("${_quanTextController
+                          .text} $dropDownValue Successfully sold for $netPriceText Naira"),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: RaisedButton(
@@ -240,10 +234,33 @@ class _SellStockPageState extends State<SellStockPage> {
                   ),
                 ),
               );
-            });
-      });
-    }
+            })).catchError((error, stackTrace) {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Container(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text("Transaction failed!!"),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RaisedButton(
+                          child: Text("Ok!"),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            form.reset();
+                          }),
+                    )
+                  ],
+                ),
+              ),
+            );
+          });
+    });
   }
+
 
   bool isQuantityAvailable(val) {
     if (int.parse(val) <= products[dropDownValue]['quantity']) {
@@ -264,147 +281,170 @@ class _SellStockPageState extends State<SellStockPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Sell Stock")),
-      body: SingleChildScrollView(
+      body: ConnectivityWidgetWrapper(
+        decoration: BoxDecoration(color: Colors.purple,
+            gradient: LinearGradient(colors: [Colors.red, Colors.cyan])),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            _buildAvailableStockCard(context),
-            Card(
-              margin: EdgeInsets.all(6.0),
-              child: Container(
-                color: Theme
-                    .of(context)
-                    .accentColor,
-                child: Form(
-                    key: formKey,
-                    child: Column(
-                      children: <Widget>[
-                        ProductsDropdown(
-                          products: products,
-                        ),
-                        Card(
-                          margin: EdgeInsets.all(8.0),
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                                bottom: 8.0, left: 8.0, right: 8.0),
-                            child: Row(
+            Expanded(flex: 1, child: _buildAvailableStockCard(context)),
+            SizedBox(
+              height: 30,
+            ),
+            Expanded(
+              flex: 2,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Card(
+                      margin: EdgeInsets.all(6.0),
+                      child: Container(
+                        color: Theme
+                            .of(context)
+                            .accentColor,
+                        child: Form(
+                            key: formKey,
+                            child: Column(
                               children: <Widget>[
-                                Padding(
-                                  padding:
-                                  const EdgeInsets.only(right: 15, top: 15),
-                                  child: Text("Current Price: ",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color:
-                                          Theme
-                                              .of(context)
-                                              .primaryColor)),
+                                ProductsDropdown(
+                                  products: products,
                                 ),
-                                Expanded(
-                                  child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          right: 15, top: 15),
-                                      child: StreamBuilder<String>(
-                                          stream: controller.stream,
-                                          builder: (context, snapshot) {
-                                            if (snapshot.hasData) {
-                                              return Text(
-                                                products[snapshot.data]
-                                                ['currentPrice']
-                                                    .toString(),
-                                              );
-                                            }
-                                            return Text(
-                                              'Please Select an Item first',
-                                            );
-                                          })),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        buildTextFormField(context,
-                            hintText: "Enter Quantity sold",
-                            textInputType: TextInputType.number,
-                            validator: (String val) {
-                              if (isInvalidNum(val)) {
-                                return "Please enter valid quantity";
-                              } else if (!isQuantityAvailable(val)) {
-                                return "Quantity sold is more than Quantity available";
-                              }
-                              return null;
-                            },
-                            labelText: "Quantity",
-                            textController: _quanTextController),
-                        Card(
-                          margin: EdgeInsets.all(8.0),
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                                bottom: 8.0, left: 8.0, right: 8.0),
-                            child: Row(
-                              children: <Widget>[
-                                Padding(
-                                  padding:
-                                  const EdgeInsets.only(right: 15, top: 15),
-                                  child: Text("Net Price: ",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color:
-                                          Theme
-                                              .of(context)
-                                              .primaryColor)),
-                                ),
-                                Expanded(
+                                Card(
+                                  margin: EdgeInsets.all(8.0),
                                   child: Padding(
                                     padding: const EdgeInsets.only(
-                                        right: 15, top: 15),
-                                    child: StreamBuilder<String>(
-                                        stream: controller.stream,
-                                        builder: (context, snapshot) {
-                                          var text;
-                                          if (snapshot.hasData) {
-                                            if (_quanTextController
-                                                .text.isNotEmpty) {
-                                              netPriceText = products[snapshot
-                                                  .data]['currentPrice'] *
-                                                  int.parse(
-                                                      _quanTextController.text);
-                                              text = netPriceText.toString();
-                                            } else {
-                                              // No Quantity entered
-                                              text =
-                                              "Please enter a valid Amount";
-                                            }
-                                          } else {
-                                            // No Item selected in dropdown
-                                            text =
-                                            'Please Select an Item first';
-                                          }
-
-                                          return Text(
-                                            text,
-                                          );
-                                        }),
+                                        bottom: 8.0, left: 8.0, right: 8.0),
+                                    child: Row(
+                                      children: <Widget>[
+                                        Padding(
+                                          padding:
+                                          const EdgeInsets.only(
+                                              right: 15, top: 15),
+                                          child: Text("Current Price: ",
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color:
+                                                  Theme
+                                                      .of(context)
+                                                      .primaryColor)),
+                                        ),
+                                        Expanded(
+                                          child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 15, top: 15),
+                                              child: StreamBuilder<String>(
+                                                  stream: controller.stream,
+                                                  builder: (context, snapshot) {
+                                                    if (snapshot.hasData) {
+                                                      return Text(
+                                                        products[snapshot.data]
+                                                        ['currentPrice']
+                                                            .toString(),
+                                                      );
+                                                    }
+                                                    return Text(
+                                                      'Please Select an Item first',
+                                                    );
+                                                  })),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                )
+                                ),
+                                buildTextFormField(context,
+                                    hintText: "Enter Quantity sold",
+                                    textInputType: TextInputType.number,
+                                    validator: (String val) {
+                                      if (isInvalidNum(val)) {
+                                        return "Please enter valid quantity";
+                                      } else if (!isQuantityAvailable(val)) {
+                                        return "Quantity sold is more than Quantity available";
+                                      }
+                                      return null;
+                                    },
+                                    labelText: "Quantity",
+                                    textController: _quanTextController),
+                                Card(
+                                  margin: EdgeInsets.all(8.0),
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        bottom: 8.0, left: 8.0, right: 8.0),
+                                    child: Row(
+                                      children: <Widget>[
+                                        Padding(
+                                          padding:
+                                          const EdgeInsets.only(
+                                              right: 15, top: 15),
+                                          child: Text("Net Price: ",
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color:
+                                                  Theme
+                                                      .of(context)
+                                                      .primaryColor)),
+                                        ),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 15, top: 15),
+                                            child: StreamBuilder<String>(
+                                                stream: controller.stream,
+                                                builder: (context, snapshot) {
+                                                  var text;
+                                                  if (snapshot.hasData) {
+                                                    if (_quanTextController
+                                                        .text.isNotEmpty) {
+                                                      netPriceText = int.parse(
+                                                          products[snapshot
+                                                              .data]['currentPrice']) *
+                                                          int.parse(
+                                                              _quanTextController
+                                                                  .text);
+                                                      text = netPriceText
+                                                          .toString();
+                                                    } else {
+                                                      // No Quantity entered
+                                                      text =
+                                                      "Please enter a valid Amount";
+                                                    }
+                                                  } else {
+                                                    // No Item selected in dropdown
+                                                    text =
+                                                    'Please Select an Item first';
+                                                  }
+
+                                                  return Text(
+                                                    text,
+                                                  );
+                                                }),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    )),
+                            )),
+                      ),
+                    ),
+                    buildButton(
+                        context: context,
+                        btnText: "Sell Product",
+                        btnIcon: Icons.shopping_cart,
+                        onBtnPressed: () {
+                          submitForm(context, formKey, _handleSellStock);
+                        }),
+                  ],
+                ),
               ),
             ),
-            buildButton(
-                context: context,
-                btnText: "Sell Product",
-                btnIcon: Icons.shopping_cart,
-                onBtnPressed: _handleSellStock),
           ],
         ),
       ),
     );
   }
 }
+
 
 Widget _buildListItem(BuildContext context, DocumentSnapshot documentSnapshot) {
   return Material(
@@ -424,11 +464,7 @@ Widget _buildListItem(BuildContext context, DocumentSnapshot documentSnapshot) {
             ),
           ),
           Container(
-            color: Colors.teal[150],
-//            decoration: const BoxDecoration(
-//              color: Colors.teal[100],
-//            ),
-            padding: const EdgeInsets.all(8.0),
+            padding: EdgeInsets.only(right: 5),
             child: Text(
               documentSnapshot['quantity'].toString().padLeft(5),
               style: Theme
@@ -450,7 +486,9 @@ Widget _buildAvailableStockCard(BuildContext context) {
   return Card(
     margin: const EdgeInsets.all(8.0),
     child: Container(
-      color: Colors.teal[100],
+      color: Theme
+          .of(context)
+          .accentColor,
       child: Column(
         children: <Widget>[
           Padding(
@@ -466,55 +504,58 @@ Widget _buildAvailableStockCard(BuildContext context) {
               textAlign: TextAlign.center,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              elevation: 8,
-              child: Padding(
-                padding: const EdgeInsets.all(5.0),
-                child: StreamBuilder(
-                  stream: controller.stream,
-                  builder: (context, snapshot) {
-                    Stream stream;
-                    if (snapshot.hasData) {
-                      stream = Firestore.instance
-                          .collection("inventory")
-                          .where('itemName', isEqualTo: snapshot.data)
-                          .snapshots();
-                    } else {
-                      stream = Firestore.instance
-                          .collection("inventory")
-                          .limit(3)
-                          .snapshots();
-                    }
-                    return StreamBuilder(
-                        stream: stream,
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return Center(
-                              child: ListView(
-                                shrinkWrap: true,
-                                children: <Widget>[
-                                  CircularProgressIndicator(),
-                                  Padding(
-                                      padding:
-                                      const EdgeInsets.only(top: 10.0)),
-                                  Text("Loading...")
-                                ],
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: Card(
+                elevation: 8,
+                child: Padding(
+                  padding: const EdgeInsets.all(5.0),
+                  child: StreamBuilder(
+                    stream: controller.stream,
+                    builder: (context, snapshot) {
+                      Stream stream;
+                      if (snapshot.hasData) {
+                        stream = Firestore.instance
+                            .collection("inventory")
+                            .where('itemName', isEqualTo: snapshot.data)
+                            .snapshots();
+                      } else {
+                        stream = Firestore.instance
+                            .collection("inventory")
+                        // .limit(3)
+                            .snapshots();
+                      }
+                      return StreamBuilder(
+                          stream: stream,
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return Center(
+                                child: ListView(
+                                  shrinkWrap: true,
+                                  children: <Widget>[
+                                    CircularProgressIndicator(),
+                                    Padding(
+                                        padding:
+                                        const EdgeInsets.only(top: 10.0)),
+                                    Text("Loading...")
+                                  ],
 //                              ),
-                              ),
-                            );
-                          }
+                                ),
+                              );
+                            }
 
-                          return ListView.builder(
+                            return ListView.builder(
 //                            itemExtent: ,
-                              shrinkWrap: true,
-                              itemCount: snapshot.data.documents.length,
-                              itemBuilder: (context, index) =>
-                                  _buildListItem(
-                                      context, snapshot.data.documents[index]));
-                        });
-                  },
+                                shrinkWrap: true,
+                                itemCount: snapshot.data.documents.length,
+                                itemBuilder: (context, index) =>
+                                    _buildListItem(
+                                        context,
+                                        snapshot.data.documents[index]));
+                          });
+                    },
+                  ),
                 ),
               ),
             ),
@@ -584,6 +625,7 @@ Widget buildButton({BuildContext context,
     ),
   );
 }
+
 
 class ProductsDropdown extends StatefulWidget {
   Map<String, DocumentSnapshot> products;

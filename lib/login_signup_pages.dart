@@ -1,8 +1,9 @@
+import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_farm_inventory/auth.dart';
-
 import 'home_page.dart';
+import 'util_functions.dart';
 
 BaseAuth _baseAuth = AuthFireBase();
 
@@ -17,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   String _email;
   String _password;
 
+  // Internet Connectivity test and Form Validation should have been done already before calling this method
   performLogin() {
     _baseAuth.signInWithEmailAndPassword(_email, _password).then((msg) {
       print(msg);
@@ -79,79 +81,84 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        color: Colors.white,
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                _buildHeadingAndLogo(heading: "Login"),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Card(
-                    elevation: 8.0,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: Form(
-                        key: formKey,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: <Widget>[
-                            CustomTextField(
-                                icon: Icon(Icons.email),
-                                label: "Email",
-                                validator: emailValidator,
-                                onSaved: (val) => _email = val,
-                                obscureText: false),
-                            CustomTextField(
-                                icon: Icon(Icons.lock),
-                                label: "Password",
-                                validator: (val) => val.length < 6
-                                    ? "Password too short"
-                                    : null,
-                                onSaved: (val) => _password = val,
-                                obscureText: true),
-                            RaisedButton.icon(
-                              icon: Icon(
-                                Icons.person_pin,
-                                color: Theme.of(context).primaryColor,
+      body: ConnectivityWidgetWrapper(
+        decoration: BoxDecoration(
+            color: Colors.purple,
+            gradient: LinearGradient(colors: [Colors.red, Colors.cyan])),
+        child: Container(
+          color: Colors.white,
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  _buildHeadingAndLogo(heading: "Login"),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Card(
+                      elevation: 8.0,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Form(
+                          key: formKey,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: <Widget>[
+                              CustomTextField(
+                                  icon: Icon(Icons.email),
+                                  label: "Email",
+                                  validator: emailValidator,
+                                  onSaved: (val) => _email = val,
+                                  obscureText: false),
+                              CustomTextField(
+                                  icon: Icon(Icons.lock),
+                                  label: "Password",
+                                  validator: (val) => val.length < 6
+                                      ? "Password too short"
+                                      : null,
+                                  onSaved: (val) => _password = val,
+                                  obscureText: true),
+                              RaisedButton.icon(
+                                icon: Icon(
+                                  Icons.person_pin,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                                color: Colors.tealAccent,
+                                label: Text("Log in"),
+                                onPressed: () {
+                                  submitForm(context, formKey, performLogin);
+                                },
                               ),
-                              color: Colors.tealAccent,
-                              label: Text("Log in"),
-                              onPressed: () {
-                                _submit(formKey, performLogin);
-                              },
-                            ),
-                            _googleSignInButton(context),
-                          ],
+                              _googleSignInButton(context),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                Container(
-                  margin: EdgeInsets.only(top: 15.0),
-                  child: RichText(
-                    text: TextSpan(
-                        text: "Don\'t have an account? \t",
-                        style: TextStyle(color: Colors.black, fontSize: 18),
-                        children: <TextSpan>[
-                          TextSpan(
-                              text: "Sign Up",
-                              style:
-                                  TextStyle(color: Colors.teal, fontSize: 18.0),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  Navigator.of(context).push(
-                                      MaterialPageRoute(builder: (context) {
-                                    return SignUpPage();
-                                  }));
-                                })
-                        ]),
+                  Container(
+                    margin: EdgeInsets.only(top: 15.0),
+                    child: RichText(
+                      text: TextSpan(
+                          text: "Don\'t have an account? \t",
+                          style: TextStyle(color: Colors.black, fontSize: 18),
+                          children: <TextSpan>[
+                            TextSpan(
+                                text: "Sign Up",
+                                style: TextStyle(
+                                    color: Colors.teal, fontSize: 18.0),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.of(context).push(
+                                        MaterialPageRoute(builder: (context) {
+                                      return SignUpPage();
+                                    }));
+                                  })
+                          ]),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -179,6 +186,7 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
+  // Internet Connectivity test and Form Validation should have been done already before calling this method
   performSignUp() {
     _baseAuth
         .signUpWithEmailAndPassword(_fullName, _email, _password)
@@ -240,95 +248,99 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                _buildHeadingAndLogo(heading: "Sign Up"),
-                Padding(
-                  padding: const EdgeInsets.all(6.0),
-                  child: Card(
-                    elevation: 8.0,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Form(
-                          key: formKey,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: <Widget>[
-                              CustomTextField(
-                                  icon: Icon(Icons.person),
-                                  label: "Full Name",
-                                  validator: (val) =>
-                                  val.isEmpty
-                                      ? 'Name Cannot be Empty'
-                                      : null,
-                                  onSaved: (val) => _fullName = val,
-                                  obscureText: false),
-                              CustomTextField(
-                                  icon: Icon(Icons.email),
-                                  label: "Email",
-                                  validator: emailValidator,
-                                  onSaved: (val) => _email = val,
-                                  obscureText: false),
-                              CustomTextField(
-                                  icon: Icon(Icons.lock),
-                                  label: "Password",
-                                  validator: (val) =>
-                                  val.length < 6
-                                      ? "Password too short"
-                                      : null,
-                                  onSaved: (val) => _password = val,
-                                  obscureText: true,
-                                  textController: _passwordTextController),
-                              CustomTextField(
-                                  icon: Icon(Icons.lock_outline),
-                                  label: "Confirm Password",
-                                  obscureText: true,
-                                  validator: (val) =>
-                                  val != _passwordTextController.text
-                                      ? "Passwords do not match"
-                                      : null),
-                              RaisedButton.icon(
-                                onPressed: () {
-                                  _submit(formKey, performSignUp);
-                                },
-                                icon: Icon(Icons.person_add, color: Theme
-                                    .of(context)
-                                    .primaryColor,),
-                                color: Colors.tealAccent,
-                                label: Text("Create Account"),
-                              )
-                            ],
-                          )),
+      body: ConnectivityWidgetWrapper(
+        decoration: BoxDecoration(color: Colors.purple,
+            gradient: LinearGradient(colors: [Colors.red, Colors.cyan])),
+        child: Container(
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  _buildHeadingAndLogo(heading: "Sign Up"),
+                  Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: Card(
+                      elevation: 8.0,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Form(
+                            key: formKey,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget>[
+                                CustomTextField(
+                                    icon: Icon(Icons.person),
+                                    label: "Full Name",
+                                    validator: (val) =>
+                                    val.isEmpty
+                                        ? 'Name Cannot be Empty'
+                                        : null,
+                                    onSaved: (val) => _fullName = val,
+                                    obscureText: false),
+                                CustomTextField(
+                                    icon: Icon(Icons.email),
+                                    label: "Email",
+                                    validator: emailValidator,
+                                    onSaved: (val) => _email = val,
+                                    obscureText: false),
+                                CustomTextField(
+                                    icon: Icon(Icons.lock),
+                                    label: "Password",
+                                    validator: (val) =>
+                                    val.length < 6
+                                        ? "Password too short"
+                                        : null,
+                                    onSaved: (val) => _password = val,
+                                    obscureText: true,
+                                    textController: _passwordTextController),
+                                CustomTextField(
+                                    icon: Icon(Icons.lock_outline),
+                                    label: "Confirm Password",
+                                    obscureText: true,
+                                    validator: (val) =>
+                                    val != _passwordTextController.text
+                                        ? "Passwords do not match"
+                                        : null),
+                                RaisedButton.icon(
+                                  onPressed: () {
+                                    submitForm(context, formKey, performSignUp);
+                                  },
+                                  icon: Icon(Icons.person_add, color: Theme
+                                      .of(context)
+                                      .primaryColor,),
+                                  color: Colors.tealAccent,
+                                  label: Text("Create Account"),
+                                )
+                              ],
+                            )),
+                      ),
                     ),
                   ),
-                ),
-                _googleSignInButton(context),
-                Container(
-                  margin: EdgeInsets.only(top: 10.0),
-                  child: RichText(
-                    text: TextSpan(
-                        text: "Already have an account? \t",
-                        style: TextStyle(color: Colors.black, fontSize: 15),
-                        children: <TextSpan>[
-                          TextSpan(
-                              text: "Sign In",
-                              style:
-                                  TextStyle(color: Colors.teal, fontSize: 15.0),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  Navigator.of(context).push(
-                                      MaterialPageRoute(builder: (context) {
-                                    return LoginPage();
-                                  }));
-                                })
-                        ]),
+                  _googleSignInButton(context),
+                  Container(
+                    margin: EdgeInsets.only(top: 10.0),
+                    child: RichText(
+                      text: TextSpan(
+                          text: "Already have an account? \t",
+                          style: TextStyle(color: Colors.black, fontSize: 15),
+                          children: <TextSpan>[
+                            TextSpan(
+                                text: "Sign In",
+                                style:
+                                TextStyle(color: Colors.teal, fontSize: 15.0),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.of(context).push(
+                                        MaterialPageRoute(builder: (context) {
+                                          return LoginPage();
+                                        }));
+                                  })
+                          ]),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -348,15 +360,6 @@ String emailValidator(String value) {
   }
 }
 
-_submit(GlobalKey<FormState> formKey, Function performAction) {
-  final form = formKey.currentState;
-
-  if (form.validate()) {
-    form.save();
-
-    performAction();
-  }
-}
 
 Widget _googleSignInButton(BuildContext context) {
   return OutlineButton(
@@ -430,13 +433,12 @@ class CustomTextField extends StatelessWidget {
 
   final double fontSize = 13.5;
 
-  CustomTextField(
-      {this.icon,
-      this.label,
-      this.obscureText = false,
-      this.validator,
-      this.onSaved,
-      this.textController});
+  CustomTextField({this.icon,
+    this.label,
+    this.obscureText = false,
+    this.validator,
+    this.onSaved,
+    this.textController});
 
   @override
   Widget build(BuildContext context) {
