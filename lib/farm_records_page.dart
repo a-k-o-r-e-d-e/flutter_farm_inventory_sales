@@ -154,6 +154,7 @@ class ProductHistory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).accentColor,
       appBar: AppBar(
         title: Text("$productName History"),
         actions: <Widget>[
@@ -244,8 +245,13 @@ class ProductHistory extends StatelessWidget {
                               ? documentSnapshot['price'].toString()
                               : "-";
 
+                          String quantity = documentSnapshot['quantity'] != null
+                              ? documentSnapshot['quantity'].toString()
+                              : "-";
+
                           Color quantityColor =
-                          documentSnapshot['action'] == 'sale'
+                          documentSnapshot['action'] == 'sale' &&
+                              documentSnapshot['quantity'] != null
                               ? Colors.red
                               : Colors.green;
 
@@ -271,7 +277,7 @@ class ProductHistory extends StatelessWidget {
                                   Expanded(
                                     flex: 2,
                                     child: Text(
-                                      documentSnapshot['quantity'].toString(),
+                                      quantity,
                                       style: TextStyle(color: quantityColor),
                                     ),
                                   ),

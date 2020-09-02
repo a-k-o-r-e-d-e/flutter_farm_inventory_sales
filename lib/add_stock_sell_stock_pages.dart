@@ -394,9 +394,10 @@ class _SellStockPageState extends State<SellStockPage> {
                                                   if (snapshot.hasData) {
                                                     if (_quanTextController
                                                         .text.isNotEmpty) {
-                                                      netPriceText = int.parse(
-                                                          products[snapshot
-                                                              .data]['currentPrice']) *
+                                                      // products[snapshot.data]['currentPrice'] should be a number on Database else an error occurs
+                                                      netPriceText = products[
+                                                                  snapshot.data]
+                                                              ['currentPrice'] *
                                                           int.parse(
                                                               _quanTextController
                                                                   .text);
