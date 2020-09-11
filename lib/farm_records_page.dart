@@ -2,9 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_farm_inventory/auth.dart';
 import 'package:intl/intl.dart';
 
 import 'home_page.dart';
+
+AuthFireBase auth = AuthFireBase();
 
 class RecordPage extends StatelessWidget {
   @override
@@ -76,7 +79,10 @@ class RecordPage extends StatelessWidget {
               ),
             ),
             StreamBuilder(
-                stream: Firestore.instance.collection("inventory").snapshots(),
+                stream: Firestore.instance.collection('users')
+                    .document(auth.currentUser.uid)
+                    .collection("inventory")
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Center(
@@ -104,11 +110,13 @@ class RecordPage extends StatelessWidget {
                               vertical: 6.0, horizontal: 8),
                           child: InkWell(
                             onTap: () {
-                              print("Tapped: ${documentSnapshot['itemName']}");
+                              print(
+                                  "Tapped: ${documentSnapshot['productName']}");
                               Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => ProductHistory(
+                                  builder: (context) =>
+                                      ProductHistory(
                                         productName:
-                                            documentSnapshot['itemName'],
+                                        documentSnapshot['productName'],
                                       )));
                             },
                             splashColor: Colors.brown,
@@ -122,7 +130,8 @@ class RecordPage extends StatelessWidget {
                                   ),
                                   Expanded(
                                     flex: 3,
-                                    child: Text(documentSnapshot['itemName']),
+                                    child: Text(
+                                        documentSnapshot['productName']),
                                   ),
                                   Expanded(
                                     flex: 3,
@@ -212,8 +221,10 @@ class ProductHistory extends StatelessWidget {
             Expanded(
               child: StreamBuilder(
                   stream: Firestore.instance
+                      .collection('users')
+                      .document(auth.currentUser.uid)
                       .collection("farm_records")
-                      .where("product", isEqualTo: productName)
+                      .where("productName", isEqualTo: productName)
                       .orderBy("dateTime", descending: true)
                       .snapshots(),
                   builder: (context, snapshot) {
@@ -367,6 +378,8 @@ class ConsolidatedSalesPage extends StatelessWidget {
             Expanded(
               child: StreamBuilder(
                   stream: Firestore.instance
+                      .collection('users')
+                      .document(auth.currentUser.uid)
                       .collection("farm_records")
                       .where("action", isEqualTo: "sale")
                       .orderBy("dateTime", descending: true)
@@ -422,7 +435,8 @@ class ConsolidatedSalesPage extends StatelessWidget {
                                   ),
                                   Expanded(
                                     flex: 3,
-                                    child: Text(documentSnapshot['product']),
+                                    child: Text(
+                                        documentSnapshot['productName']),
                                   ),
                                   Expanded(
                                     flex: 2,

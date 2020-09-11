@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
 class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    Color textColor = Colors.teal;
+    // Color textColor = Colors.teal;
     Color bgColor = Colors.white;
     Color btnColor = Colors.tealAccent;
     Color btnTextColor = Colors.black;
@@ -41,26 +41,26 @@ class WelcomePage extends StatelessWidget {
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Text(
-                  "Wolf Farms",
-                  style: TextStyle(
-                      fontSize: 25.0,
-                      fontWeight: FontWeight.bold,
-                      color: textColor),
-                ),
-                Padding(padding: EdgeInsets.only(top: 10.0)),
-                Image.asset(
-                  "assets/wolf.png",
-                  height: 100,
-                  width: 150,
-                ),
-                Padding(padding: EdgeInsets.only(top: 10.0)),
-                Text(
-                  "Keeping Records....",
-                  style: TextStyle(
-                      color: textColor,
-                      fontSize: 12.0,
-                      fontWeight: FontWeight.bold),
+            Text(
+              "Wolf Farms",
+              style: TextStyle(
+                  fontSize: 25.0,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor),
+            ),
+            Padding(padding: EdgeInsets.only(top: 10.0)),
+            Image.asset(
+              "assets/wolf.png",
+              height: 100,
+              width: 150,
+            ),
+            Padding(padding: EdgeInsets.only(top: 10.0)),
+            Text(
+              "Keeping Records....",
+              style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.bold),
                 ),
                 Padding(padding: EdgeInsets.only(top: 10.0)),
                 RaisedButton(

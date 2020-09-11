@@ -19,6 +19,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int curtPage = 0;
 
+  AuthFireBase auth = AuthFireBase();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,6 +43,8 @@ class _HomePageState extends State<HomePage> {
                         height: 260,
                         child: StreamBuilder(
                             stream: Firestore.instance
+                                .collection('users')
+                                .document(auth.currentUser.uid)
                                 .collection("farm_records")
                                 .where("action", isEqualTo: "sale")
                                 .orderBy("dateTime", descending: true)
@@ -55,7 +59,7 @@ class _HomePageState extends State<HomePage> {
                                       Padding(
                                           padding:
                                               const EdgeInsets.only(top: 10.0)),
-                                      Text("Loading...")
+                                      Text("Loading...${auth.currentUser.uid}")
                                     ],
                                   ),
                                 );
@@ -275,7 +279,7 @@ class _HomePageState extends State<HomePage> {
 //                                            flex: 2,
                                                           child: Text(
                                                             documentSnap[
-                                                                'product'],
+                                                                'productName'],
                                                           ),
                                                         ),
                                                         Expanded(

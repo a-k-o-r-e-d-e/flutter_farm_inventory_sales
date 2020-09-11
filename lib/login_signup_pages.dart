@@ -2,6 +2,7 @@ import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_farm_inventory/auth.dart';
+
 import 'home_page.dart';
 import 'util_functions.dart';
 
@@ -48,6 +49,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     }).catchError((error) {
       switch (error.code) {
+        //TODO:: Handle Wrong Password case
         case "ERROR_USER_NOT_FOUND":
           {
             var errorMsg = "User doesn\'t exists";
@@ -196,6 +198,9 @@ class _SignUpPageState extends State<SignUpPage> {
         return HomePage();
       }));
     }).catchError((error) {
+      print("Message: ${error.message}");
+      print(error.stackTrace);
+
       switch (error.code) {
         case "ERROR_EMAIL_ALREADY_IN_USE":
           {

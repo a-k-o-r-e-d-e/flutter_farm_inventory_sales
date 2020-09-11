@@ -8,10 +8,10 @@ import 'package:google_sign_in/google_sign_in.dart';
 abstract class BaseAuth {
   Stream<FirebaseUser> get onAuthStateChanged;
 
-  Future<String> signInWithEmailAndPassword(String email, String passord);
+  Future<String> signInWithEmailAndPassword(String email, String password);
 
   Future<String> signUpWithEmailAndPassword(
-      String fullname, String email, String password);
+      String fullName, String email, String password);
 
   Future<void> signOut();
 
@@ -19,12 +19,35 @@ abstract class BaseAuth {
 
   Future signInWithGoogle();
 
-  Future<FirebaseUser> get currentUser;
+  Future<FirebaseUser> get currentUserFuture;
 }
 
 class AuthFireBase extends ChangeNotifier implements BaseAuth {
+
+  static AuthFireBase _instance;
+
+  AuthFireBase._internal() {
+    _instance = this;
+    getCurrentUser();
+  }
+
+  FirebaseUser get currentUser => _currentUser;
+
+  Future<void> getCurrentUser() async {
+    _currentUser = await currentUserFuture;
+
+    _firebaseAuth.onAuthStateChanged.listen((user) {
+      _currentUser = user;
+    });
+  }
+
+  factory AuthFireBase() => _instance ?? AuthFireBase._internal();
+
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  FirebaseUser _currentUser;
+
 
   @override
   Stream<FirebaseUser> get onAuthStateChanged {
@@ -34,16 +57,16 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
   @override
   Future<String> signInWithGoogle() async {
     final GoogleSignInAccount googleSignInAccount =
-        await _googleSignIn.signIn();
+    await _googleSignIn.signIn();
     final GoogleSignInAuthentication googleSignInAuthentication =
-        await googleSignInAccount.authentication;
+    await googleSignInAccount.authentication;
 
     final AuthCredential credential = GoogleAuthProvider.getCredential(
         idToken: googleSignInAuthentication.idToken,
         accessToken: googleSignInAuthentication.accessToken);
 
     final AuthResult authResult =
-        await _firebaseAuth.signInWithCredential(credential);
+    await _firebaseAuth.signInWithCredential(credential);
     final FirebaseUser user = authResult.user;
 
     assert(!user.isAnonymous);
@@ -56,10 +79,10 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
   }
 
   @override
-  Future<String> signInWithEmailAndPassword(
-      String email, String passord) async {
+  Future<String> signInWithEmailAndPassword(String email,
+      String password) async {
     FirebaseUser user = (await _firebaseAuth.signInWithEmailAndPassword(
-            email: email, password: passord))
+        email: email, password: password))
         .user;
     print("User is Verified: ${user.isEmailVerified}");
     if (user.isEmailVerified) return user.uid;
@@ -72,10 +95,10 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
   }
 
   @override
-  Future<String> signUpWithEmailAndPassword(
-      String fullName, String email, String password) async {
+  Future<String> signUpWithEmailAndPassword(String fullName, String email,
+      String password) async {
     FirebaseUser user = (await _firebaseAuth.createUserWithEmailAndPassword(
-            email: email, password: password))
+        email: email, password: password))
         .user;
 
     UserUpdateInfo userUpdateInfo = new UserUpdateInfo();
@@ -103,6 +126,6 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
   }
 
   @override
-  Future<FirebaseUser> get currentUser async =>
+  Future<FirebaseUser> get currentUserFuture async =>
       await _firebaseAuth.currentUser();
 }

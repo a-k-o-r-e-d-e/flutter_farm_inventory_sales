@@ -4,11 +4,13 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/material.dart';
-
+import 'package:flutter_farm_inventory/auth.dart';
 import 'util_functions.dart';
 
 var dropDownValue;
 StreamController<String> controller = StreamController<String>.broadcast();
+
+AuthFireBase auth = AuthFireBase();
 
 class AddStockPage extends StatefulWidget {
   @override
@@ -30,22 +32,24 @@ class _AddStockPageState extends State<AddStockPage> {
   void _handleAddStock() async {
     var quantity = int.parse(_quantityTextController.text);
 
-    var farmRecordsCollection = Firestore.instance.collection('farm_records');
+    var farmRecordsCollection = Firestore.instance.collection('users')
+        .document(auth.currentUser.uid).collection('farm_records');
+
     Map<String, dynamic> farmRecordsMap = Map();
     farmRecordsMap.putIfAbsent('action', () => "addStock");
-    farmRecordsMap.putIfAbsent('product', () => dropDownValue);
+    farmRecordsMap.putIfAbsent('productName', () => dropDownValue);
     farmRecordsMap.putIfAbsent('quantity', () => quantity);
     farmRecordsMap.putIfAbsent('dateTime', () => DateTime.now().toUtc());
 
     var documentSnapshot = documents[dropDownValue];
     Firestore.instance
         .runTransaction((transaction) async {
-          DocumentSnapshot freshSnap =
-              await transaction.get(documentSnapshot.reference);
-          await transaction.update(freshSnap.reference,
-              {'quantity': documentSnapshot['quantity'] + quantity});
-          farmRecordsCollection.add(farmRecordsMap);
-        })
+      DocumentSnapshot freshSnap =
+      await transaction.get(documentSnapshot.reference);
+      await transaction.update(freshSnap.reference,
+          {'quantity': documentSnapshot['quantity'] + quantity});
+      farmRecordsCollection.add(farmRecordsMap);
+    })
         .whenComplete(() => showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -168,9 +172,9 @@ class SellStockPage extends StatefulWidget {
 class _SellStockPageState extends State<SellStockPage> {
   var formKey = GlobalKey<FormState>();
 
-  TextEditingController _quanTextController = TextEditingController();
-  TextEditingController _priceTextController = TextEditingController();
-  var netPriceText;
+  TextEditingController _qtyTxtController = TextEditingController();
+  TextEditingController _priceTxtController = TextEditingController();
+  var netPriceTxt;
 
   Map<String, DocumentSnapshot> products = HashMap();
 
@@ -180,7 +184,7 @@ class _SellStockPageState extends State<SellStockPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    _quanTextController.addListener(() {
+    _qtyTxtController.addListener(() {
       // This makes the net Price to recalculate each time quantity changes
       // Make sure dropDownValue is not null
       if (dropDownValue != null) {
@@ -194,16 +198,17 @@ class _SellStockPageState extends State<SellStockPage> {
   void _handleSellStock() async {
     final form = formKey.currentState;
 
-    var quantity = int.parse(_quanTextController.text);
+    var quantity = int.parse(_qtyTxtController.text);
     var stockDocumentSnapshot = products[dropDownValue];
-    var salesCollection = Firestore.instance.collection('farm_records');
+    var salesCollection = Firestore.instance.collection('users')
+        .document(auth.currentUser.uid).collection('farm_records');
     Map<String, dynamic> salesMap = Map();
     salesMap.putIfAbsent('action', () => 'sale');
-    salesMap.putIfAbsent('product', () => dropDownValue);
-    salesMap.putIfAbsent('price', () => netPriceText);
+    salesMap.putIfAbsent('productName', () => dropDownValue);
+    salesMap.putIfAbsent('price', () => netPriceTxt);
     salesMap.putIfAbsent('quantity', () => quantity);
     salesMap.putIfAbsent('dateTime', () => DateTime.now().toUtc());
-    print(stockDocumentSnapshot['itemName']);
+    print(stockDocumentSnapshot['productName']);
     Firestore.instance.runTransaction((transaction) async {
       DocumentSnapshot freshSnap =
       await transaction.get(stockDocumentSnapshot.reference);
@@ -219,8 +224,8 @@ class _SellStockPageState extends State<SellStockPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Text("${_quanTextController
-                          .text} $dropDownValue Successfully sold for $netPriceText Naira"),
+                      Text("${_qtyTxtController
+                          .text} $dropDownValue Successfully sold for $netPriceTxt Naira"),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: RaisedButton(
@@ -271,8 +276,8 @@ class _SellStockPageState extends State<SellStockPage> {
 
   @override
   void dispose() {
-    _quanTextController.dispose();
-    _priceTextController.dispose();
+    _qtyTxtController.dispose();
+    _priceTxtController.dispose();
 
     super.dispose();
   }
@@ -363,7 +368,7 @@ class _SellStockPageState extends State<SellStockPage> {
                                       return null;
                                     },
                                     labelText: "Quantity",
-                                    textController: _quanTextController),
+                                    textController: _qtyTxtController),
                                 Card(
                                   margin: EdgeInsets.all(8.0),
                                   child: Padding(
@@ -392,16 +397,16 @@ class _SellStockPageState extends State<SellStockPage> {
                                                 builder: (context, snapshot) {
                                                   var text;
                                                   if (snapshot.hasData) {
-                                                    if (_quanTextController
+                                                    if (_qtyTxtController
                                                         .text.isNotEmpty) {
                                                       // products[snapshot.data]['currentPrice'] should be a number on Database else an error occurs
-                                                      netPriceText = products[
-                                                                  snapshot.data]
-                                                              ['currentPrice'] *
+                                                      netPriceTxt = products[
+                                                      snapshot.data]
+                                                      ['currentPrice'] *
                                                           int.parse(
-                                                              _quanTextController
+                                                              _qtyTxtController
                                                                   .text);
-                                                      text = netPriceText
+                                                      text = netPriceTxt
                                                           .toString();
                                                     } else {
                                                       // No Quantity entered
@@ -454,7 +459,7 @@ Widget _buildListItem(BuildContext context, DocumentSnapshot documentSnapshot) {
         children: <Widget>[
           Expanded(
             child: Text(
-              documentSnapshot['itemName'],
+              documentSnapshot['productName'],
               style: Theme
                   .of(context)
                   .textTheme
@@ -518,13 +523,16 @@ Widget _buildAvailableStockCard(BuildContext context) {
                       Stream stream;
                       if (snapshot.hasData) {
                         stream = Firestore.instance
+                            .collection('users')
+                            .document(auth.currentUser.uid)
                             .collection("inventory")
-                            .where('itemName', isEqualTo: snapshot.data)
+                            .where('productName', isEqualTo: snapshot.data)
                             .snapshots();
                       } else {
                         stream = Firestore.instance
+                            .collection('users')
+                            .document(auth.currentUser.uid)
                             .collection("inventory")
-                        // .limit(3)
                             .snapshots();
                       }
                       return StreamBuilder(
@@ -639,6 +647,7 @@ class ProductsDropdown extends StatefulWidget {
 }
 
 class _ProductsDropdownState extends State<ProductsDropdown> {
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -649,7 +658,10 @@ class _ProductsDropdownState extends State<ProductsDropdown> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             StreamBuilder(
-                stream: Firestore.instance.collection("inventory").snapshots(),
+                stream: Firestore.instance.collection('users')
+                    .document(auth.currentUser.uid)
+                    .collection("inventory")
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Text("Loading....");
@@ -659,9 +671,9 @@ class _ProductsDropdownState extends State<ProductsDropdown> {
                   var itemLists = List<String>.generate(
                       snapshot.data.documents.length, (int index) {
                     widget.products.putIfAbsent(
-                        snapshot.data.documents[index]['itemName'],
+                        snapshot.data.documents[index]['productName'],
                             () => snapshot.data.documents[index]);
-                    return snapshot.data.documents[index]['itemName'];
+                    return snapshot.data.documents[index]['productName'];
                   });
                   print("Keys: ${widget.products.keys}");
 //                  controller.add("Test");

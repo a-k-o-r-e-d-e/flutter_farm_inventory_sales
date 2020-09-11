@@ -206,8 +206,10 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
     var productQuantity = int.parse(_quantityTextController.text);
 
     await Firestore.instance
+        .collection('users')
+        .document(auth.currentUser.uid)
         .collection('inventory')
-        .where('itemName', isEqualTo: productName)
+        .where('productName', isEqualTo: productName)
         .getDocuments()
         .then((value) {
       if (value.documents.isNotEmpty) {
@@ -236,35 +238,40 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                 );
               });
         } else {
-          // if product doesn't exist
-          var prodCollection = Firestore.instance.collection('inventory');
-          var recordCollection = Firestore.instance.collection('farm_records');
-          Map<String, dynamic> productMap = Map();
-          productMap.putIfAbsent('itemName', () => productName);
-          productMap.putIfAbsent('currentPrice', () => productPrice);
-          productMap.putIfAbsent('quantity', () => productQuantity);
+        // if product doesn't exist
+        var prodCollection = Firestore.instance
+            .collection('users')
+            .document(auth.currentUser.uid)
+            .collection('inventory');
+        var recordCollection = Firestore.instance
+            .collection('users')
+            .document(auth.currentUser.uid)
+            .collection('farm_records');
+        Map<String, dynamic> productMap = Map();
+        productMap.putIfAbsent('productName', () => productName);
+        productMap.putIfAbsent('currentPrice', () => productPrice);
+        productMap.putIfAbsent('quantity', () => productQuantity);
 
-          Firestore.instance
-              .runTransaction((transaction) async {
-            prodCollection.add(productMap);
-            recordCollection.add({
-              'action': 'Product Created',
-              'product': productName,
-              'quantity': productQuantity,
-              'currentPrice': productPrice,
-              'dateTime': DateTime.now().toUtc(),
-            });
-          })
-              .then((value) =>
-              showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      content: Container(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Text(
+        Firestore.instance
+            .runTransaction((transaction) async {
+              prodCollection.add(productMap);
+              recordCollection.add({
+                'action': 'Product Created',
+                'productName': productName,
+                'quantity': productQuantity,
+                'currentPrice': productPrice,
+                'dateTime': DateTime.now().toUtc(),
+              });
+            })
+            .then((value) => showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    content: Container(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(
                                 "The Product '$productName' has been created & added to inventory."),
                             Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -316,27 +323,28 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
     var productPrice = int.parse(_priceTextController.text);
     var productName = _productNameTextController.text;
 
-    var prodCollection = Firestore.instance.collection('farm_records');
+    var prodCollection = Firestore.instance.collection('users')
+        .document(auth.currentUser.uid).collection('farm_records');
 
     var documentSnapshot =
     productsDropdown.products[productsDropdown.selectedItem];
     var oldPrice = documentSnapshot['currentPrice'];
-      Firestore.instance
-          .runTransaction((transaction) async {
-            DocumentSnapshot freshSnap =
-                await transaction.get(documentSnapshot.reference);
-            await transaction
-                .update(freshSnap.reference, {'currentPrice': productPrice});
-            prodCollection.add({
-              'action': 'Price Change',
-              'product': productName,
-              'dateTime': DateTime.now().toUtc(),
-              'oldPrice': oldPrice,
-              'newPrice': productPrice
-            });
-      })
-          .then((value) =>
-          showDialog(
+    Firestore.instance
+        .runTransaction((transaction) async {
+      DocumentSnapshot freshSnap =
+      await transaction.get(documentSnapshot.reference);
+      await transaction
+          .update(freshSnap.reference, {'currentPrice': productPrice});
+      prodCollection.add({
+        'action': 'Price Change',
+        'productName': productName,
+        'dateTime': DateTime.now().toUtc(),
+        'oldPrice': oldPrice,
+        'newPrice': productPrice
+      });
+    })
+        .then((value) =>
+        showDialog(
               context: context,
               builder: (BuildContext context) {
                 // The line below ensures that the dropdown resets
