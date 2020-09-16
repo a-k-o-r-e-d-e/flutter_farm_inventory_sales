@@ -6,12 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 abstract class BaseAuth {
-  Stream<FirebaseUser> get onAuthStateChanged;
+  Stream<User> get onAuthStateChanged;
 
-  Future<String> signInWithEmailAndPassword(String email, String password);
+  Future<UserCredential> signInWithEmailAndPassword(
+      String email, String password);
 
-  Future<String> signUpWithEmailAndPassword(
-      String fullName, String email, String password);
+  Future<UserCredential> signUpWithEmailAndPassword(String fullName,
+      String email, String password);
 
   Future<void> signOut();
 
@@ -19,7 +20,7 @@ abstract class BaseAuth {
 
   Future signInWithGoogle();
 
-  Future<FirebaseUser> get currentUserFuture;
+  Future<User> get currentUserFuture;
 }
 
 class AuthFireBase extends ChangeNotifier implements BaseAuth {
@@ -31,12 +32,13 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
     getCurrentUser();
   }
 
-  FirebaseUser get currentUser => _currentUser;
+  User get currentUser => _currentUser;
+
 
   Future<void> getCurrentUser() async {
     _currentUser = await currentUserFuture;
 
-    _firebaseAuth.onAuthStateChanged.listen((user) {
+    _firebaseAuth.authStateChanges().listen((user) {
       _currentUser = user;
     });
   }
@@ -46,12 +48,12 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  FirebaseUser _currentUser;
+  User _currentUser;
 
 
   @override
-  Stream<FirebaseUser> get onAuthStateChanged {
-    return _firebaseAuth.onAuthStateChanged;
+  Stream<User> get onAuthStateChanged {
+    return _firebaseAuth.authStateChanges();
   }
 
   @override
@@ -61,32 +63,33 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
     final GoogleSignInAuthentication googleSignInAuthentication =
     await googleSignInAccount.authentication;
 
-    final AuthCredential credential = GoogleAuthProvider.getCredential(
+    final AuthCredential credential = GoogleAuthProvider.credential(
         idToken: googleSignInAuthentication.idToken,
         accessToken: googleSignInAuthentication.accessToken);
 
-    final AuthResult authResult =
+    final UserCredential authResult =
     await _firebaseAuth.signInWithCredential(credential);
-    final FirebaseUser user = authResult.user;
+    final User user = authResult.user;
 
     assert(!user.isAnonymous);
     assert(await user.getIdToken() != null);
 
-    final FirebaseUser currentUser = await _firebaseAuth.currentUser();
+    final User currentUser = await _firebaseAuth.currentUser;
     assert(user.uid == currentUser.uid);
 
     return 'signInWithGoogle succeeded: $user';
   }
 
   @override
-  Future<String> signInWithEmailAndPassword(String email,
+  Future<UserCredential> signInWithEmailAndPassword(String email,
       String password) async {
-    FirebaseUser user = (await _firebaseAuth.signInWithEmailAndPassword(
-        email: email, password: password))
-        .user;
-    print("User is Verified: ${user.isEmailVerified}");
-    if (user.isEmailVerified) return user.uid;
-    return null;
+    // FirebaseUser user = (await _firebaseAuth.signInWithEmailAndPassword(
+    //     email: email, password: password)).user;
+    // print("User is Verified: ${user.isEmailVerified}");
+    // if (user.isEmailVerified) return user.uid;
+    // return null;
+    return _firebaseAuth.signInWithEmailAndPassword(
+        email: email, password: password);
   }
 
   @override
@@ -95,29 +98,23 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
   }
 
   @override
-  Future<String> signUpWithEmailAndPassword(String fullName, String email,
+  Future<UserCredential> signUpWithEmailAndPassword(String fullName,
+      String email,
       String password) async {
-    FirebaseUser user = (await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email, password: password))
-        .user;
+    return _firebaseAuth.createUserWithEmailAndPassword(
+        email: email, password: password).then((userCred) {
+      User user = userCred.user;
+      user.sendEmailVerification();
+      user.updateProfile(displayName: fullName).then((onValue) {
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .set({'email': email, 'displayName': fullName});
+      });
 
-    UserUpdateInfo userUpdateInfo = new UserUpdateInfo();
-    userUpdateInfo.displayName = fullName;
-
-    await user.updateProfile(userUpdateInfo).then((onValue) {
-      Firestore.instance
-          .collection('users')
-          .document(user.uid)
-          .setData({'email': email, 'displayName': fullName});
+      return userCred;
     });
 
-    try {
-      await user.sendEmailVerification();
-      return user.uid;
-    } catch (e) {
-      print("An Error occurred while trying to send email verification");
-      print(e.message);
-    }
   }
 
   @override
@@ -126,6 +123,6 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
   }
 
   @override
-  Future<FirebaseUser> get currentUserFuture async =>
-      await _firebaseAuth.currentUser();
+  Future<User> get currentUserFuture async =>
+      await _firebaseAuth.currentUser;
 }

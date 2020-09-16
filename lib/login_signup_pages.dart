@@ -2,6 +2,7 @@ import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_farm_inventory/auth.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 import 'home_page.dart';
 import 'util_functions.dart';
@@ -13,17 +14,22 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => _LoginPageState();
 }
 
+
 class _LoginPageState extends State<LoginPage> {
   final formKey = GlobalKey<FormState>();
-
   String _email;
   String _password;
+  bool _loading = false;
 
-  // Internet Connectivity test and Form Validation should have been done already before calling this method
-  performLogin() {
-    _baseAuth.signInWithEmailAndPassword(_email, _password).then((msg) {
-      print(msg);
-      if (msg == null) {
+// Internet Connectivity test and Form Validation should have been done already before calling this method
+  performNormalLogin() async {
+    setState(() {
+      _loading = true;
+    });
+
+    await _baseAuth.signInWithEmailAndPassword(_email, _password).then((
+        response) {
+      if (!response.user.emailVerified) {
         showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -48,241 +54,97 @@ class _LoginPageState extends State<LoginPage> {
             });
       }
     }).catchError((error) {
+      String errorMsg;
+
       switch (error.code) {
-        //TODO:: Handle Wrong Password case
-        case "ERROR_USER_NOT_FOUND":
-          {
-            var errorMsg = "User doesn\'t exists";
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    content: Container(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(errorMsg),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: RaisedButton(
-                                child: Text("Ok!"),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                }),
-                          )
-                        ],
-                      ),
-                    ),
-                  );
-                });
-          }
+      //TODO:: Handle Wrong Password case
+
+        case "wrong-password":
+          errorMsg = "Your password is wrong.";
+          break;
+        case "user-not-found":
+          errorMsg = "User with this email doesn't exist.";
+          break;
+        case "user-disabled":
+          errorMsg = "User with this email has been disabled.";
+          break;
+        case "too-many-requests":
+          errorMsg = "Too many requests. Try again later.";
+          break;
+        case "invalid-email":
+          errorMsg = "Email entered is Invalid";
+          break;
+        default:
+          errorMsg = "An undefined Error happened.";
       }
+      print("Error: ${error.code}");
+      print("Error Type: ${error.runtimeType}");
+
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Container(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(errorMsg),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RaisedButton(
+                          child: Text("Ok!"),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          }),
+                    )
+                  ],
+                ),
+              ),
+            );
+          });
+    }).whenComplete(() {
+      // Loading Dialog
+      setState(() {
+        _loading = false;
+      });
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
+
+  Widget _loginForm() {
     return Scaffold(
       body: ConnectivityWidgetWrapper(
         decoration: BoxDecoration(
             color: Colors.purple,
             gradient: LinearGradient(colors: [Colors.red, Colors.cyan])),
-        child: Container(
-          color: Colors.white,
-          child: Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  _buildHeadingAndLogo(heading: "Login"),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Card(
-                      elevation: 8.0,
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Form(
-                          key: formKey,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: <Widget>[
-                              CustomTextField(
-                                  icon: Icon(Icons.email),
-                                  label: "Email",
-                                  validator: emailValidator,
-                                  onSaved: (val) => _email = val,
-                                  obscureText: false),
-                              CustomTextField(
-                                  icon: Icon(Icons.lock),
-                                  label: "Password",
-                                  validator: (val) => val.length < 6
-                                      ? "Password too short"
-                                      : null,
-                                  onSaved: (val) => _password = val,
-                                  obscureText: true),
-                              RaisedButton.icon(
-                                icon: Icon(
-                                  Icons.person_pin,
-                                  color: Theme.of(context).primaryColor,
-                                ),
-                                color: Colors.tealAccent,
-                                label: Text("Log in"),
-                                onPressed: () {
-                                  submitForm(context, formKey, performLogin);
-                                },
-                              ),
-                              _googleSignInButton(context),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(top: 15.0),
-                    child: RichText(
-                      text: TextSpan(
-                          text: "Don\'t have an account? \t",
-                          style: TextStyle(color: Colors.black, fontSize: 18),
-                          children: <TextSpan>[
-                            TextSpan(
-                                text: "Sign Up",
-                                style: TextStyle(
-                                    color: Colors.teal, fontSize: 18.0),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    Navigator.of(context).push(
-                                        MaterialPageRoute(builder: (context) {
-                                      return SignUpPage();
-                                    }));
-                                  })
-                          ]),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        child: ModalProgressHUD(
+          opacity: 0.9,
+          color: Colors.transparent,
+          progressIndicator: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Theme
+                .of(context)
+                .primaryColor),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class SignUpPage extends StatefulWidget {
-  @override
-  _SignUpPageState createState() => _SignUpPageState();
-}
-
-class _SignUpPageState extends State<SignUpPage> {
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  final TextEditingController _passwordTextController = TextEditingController();
-
-  String _email;
-  String _password;
-  String _fullName;
-
-  @override
-  void dispose() {
-    _passwordTextController.dispose();
-    super.dispose();
-  }
-
-  // Internet Connectivity test and Form Validation should have been done already before calling this method
-  performSignUp() {
-    _baseAuth
-        .signUpWithEmailAndPassword(_fullName, _email, _password)
-        .then((msg) {
-      print(msg);
-      Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-        return HomePage();
-      }));
-    }).catchError((error) {
-      print("Message: ${error.message}");
-      print(error.stackTrace);
-
-      switch (error.code) {
-        case "ERROR_EMAIL_ALREADY_IN_USE":
-          {
-            var errorMsg = "This email is already in use.";
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    content: Container(
-                      child: Text(errorMsg),
-                    ),
-                  );
-                });
-          }
-          break;
-        case "ERROR_WEAK_PASSWORD":
-          {
-            var errorMsg = "The password must be 6 characters long or more.";
-//              _loading = false;
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    content: Container(
-                      child: Text(errorMsg),
-                    ),
-                  );
-                });
-          }
-          break;
-        case "ERROR_INVALID_EMAIL":
-          {
-            var errorMsg = "Email is invalid";
-//              _loading = false;
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    content: Container(
-                      child: Text(errorMsg),
-                    ),
-                  );
-                });
-          }
-          break;
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: ConnectivityWidgetWrapper(
-        decoration: BoxDecoration(color: Colors.purple,
-            gradient: LinearGradient(colors: [Colors.red, Colors.cyan])),
-        child: Container(
-          child: Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  _buildHeadingAndLogo(heading: "Sign Up"),
-                  Padding(
-                    padding: const EdgeInsets.all(6.0),
-                    child: Card(
-                      elevation: 8.0,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Form(
+          inAsyncCall: _loading,
+          child: Container(
+            color: Colors.white,
+            child: Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    _buildHeadingAndLogo(heading: "Login"),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Card(
+                        elevation: 8.0,
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Form(
                             key: formKey,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: <Widget>[
-                                CustomTextField(
-                                    icon: Icon(Icons.person),
-                                    label: "Full Name",
-                                    validator: (val) =>
-                                    val.isEmpty
-                                        ? 'Name Cannot be Empty'
-                                        : null,
-                                    onSaved: (val) => _fullName = val,
-                                    obscureText: false),
                                 CustomTextField(
                                     icon: Icon(Icons.email),
                                     label: "Email",
@@ -297,54 +159,259 @@ class _SignUpPageState extends State<SignUpPage> {
                                         ? "Password too short"
                                         : null,
                                     onSaved: (val) => _password = val,
-                                    obscureText: true,
-                                    textController: _passwordTextController),
-                                CustomTextField(
-                                    icon: Icon(Icons.lock_outline),
-                                    label: "Confirm Password",
-                                    obscureText: true,
-                                    validator: (val) =>
-                                    val != _passwordTextController.text
-                                        ? "Passwords do not match"
-                                        : null),
+                                    obscureText: true),
                                 RaisedButton.icon(
-                                  onPressed: () {
-                                    submitForm(context, formKey, performSignUp);
-                                  },
-                                  icon: Icon(Icons.person_add, color: Theme
-                                      .of(context)
-                                      .primaryColor,),
+                                  icon: Icon(
+                                    Icons.person_pin,
+                                    color: Theme
+                                        .of(context)
+                                        .primaryColor,
+                                  ),
                                   color: Colors.tealAccent,
-                                  label: Text("Create Account"),
-                                )
+                                  label: Text("Log in"),
+                                  onPressed: () {
+                                    submitForm(
+                                        context, formKey, performNormalLogin);
+                                  },
+                                ),
+                                _googleSignInButton(context),
                               ],
-                            )),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  _googleSignInButton(context),
-                  Container(
-                    margin: EdgeInsets.only(top: 10.0),
-                    child: RichText(
-                      text: TextSpan(
-                          text: "Already have an account? \t",
-                          style: TextStyle(color: Colors.black, fontSize: 15),
-                          children: <TextSpan>[
-                            TextSpan(
-                                text: "Sign In",
-                                style:
-                                TextStyle(color: Colors.teal, fontSize: 15.0),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    Navigator.of(context).push(
-                                        MaterialPageRoute(builder: (context) {
-                                          return LoginPage();
-                                        }));
-                                  })
-                          ]),
+                    Container(
+                      margin: EdgeInsets.only(top: 15.0),
+                      child: RichText(
+                        text: TextSpan(
+                            text: "Don\'t have an account? \t",
+                            style: TextStyle(color: Colors.black, fontSize: 18),
+                            children: <TextSpan>[
+                              TextSpan(
+                                  text: "Sign Up",
+                                  style: TextStyle(
+                                      color: Colors.teal, fontSize: 18.0),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(builder: (context) {
+                                            return SignUpPage();
+                                          }));
+                                    })
+                            ]),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _loginForm();
+  }
+}
+
+class SignUpPage extends StatefulWidget {
+  @override
+  _SignUpPageState createState() => _SignUpPageState();
+}
+
+class _SignUpPageState extends State<SignUpPage> {
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final TextEditingController _passwordTextController = TextEditingController();
+  bool _loading = false;
+
+  String _email;
+  String _password;
+  String _fullName;
+
+  @override
+  void dispose() {
+    _passwordTextController.dispose();
+    super.dispose();
+  }
+
+  // Internet Connectivity test and Form Validation should have been done already before calling this method
+  performSignUp() async {
+    setState(() {
+      _loading = true;
+    });
+
+    await _baseAuth
+        .signUpWithEmailAndPassword(_fullName, _email, _password)
+        .then((value) {
+      print(value);
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+        return HomePage();
+      }));
+    }).catchError((error) {
+      print("Error: ${error.code}");
+      print("Error Type: ${error.runtimeType}");
+
+      String errorMsg;
+      switch (error.code) {
+        case "email-already-in-use":
+          errorMsg = "This email is already in use.";
+          break;
+        case "weak-password":
+          errorMsg = "The password must be 6 characters long or more.";
+          break;
+        case "invalid-email":
+          errorMsg = "Email is invalid";
+          break;
+        case "operation-not-allowed":
+          errorMsg = "User Creation by email and Password not enabled";
+          break;
+        default:
+          errorMsg = "An Undefined Error Occurred";
+      }
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Container(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(errorMsg),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RaisedButton(
+                          child: Text("Ok!"),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          }),
+                    )
+                  ],
+                ),
+              ),
+            );
+          });
+    }).whenComplete(() {
+      setState(() {
+        _loading = false;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: ConnectivityWidgetWrapper(
+        decoration: BoxDecoration(
+            color: Colors.purple,
+            gradient: LinearGradient(colors: [Colors.red, Colors.cyan])),
+        child: ModalProgressHUD(
+          inAsyncCall: _loading,
+          opacity: 0.9,
+          color: Colors.transparent,
+          progressIndicator: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Theme
+                .of(context)
+                .primaryColor),
+          ),
+          child: Container(
+            child: Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    _buildHeadingAndLogo(heading: "Sign Up"),
+                    Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Card(
+                        elevation: 8.0,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Form(
+                              key: formKey,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment
+                                    .spaceEvenly,
+                                children: <Widget>[
+                                  CustomTextField(
+                                      icon: Icon(Icons.person),
+                                      label: "Full Name",
+                                      validator: (val) =>
+                                      val.isEmpty
+                                          ? 'Name Cannot be Empty'
+                                          : null,
+                                      onSaved: (val) => _fullName = val,
+                                      obscureText: false),
+                                  CustomTextField(
+                                      icon: Icon(Icons.email),
+                                      label: "Email",
+                                      validator: emailValidator,
+                                      onSaved: (val) => _email = val,
+                                      obscureText: false),
+                                  CustomTextField(
+                                      icon: Icon(Icons.lock),
+                                      label: "Password",
+                                      validator: (val) =>
+                                      val.length < 6
+                                          ? "Password too short"
+                                          : null,
+                                      onSaved: (val) => _password = val,
+                                      obscureText: true,
+                                      textController: _passwordTextController),
+                                  CustomTextField(
+                                      icon: Icon(Icons.lock_outline),
+                                      label: "Confirm Password",
+                                      obscureText: true,
+                                      validator: (val) =>
+                                      val != _passwordTextController.text
+                                          ? "Passwords do not match"
+                                          : null),
+                                  RaisedButton.icon(
+                                    onPressed: () {
+                                      submitForm(
+                                          context, formKey, performSignUp);
+                                    },
+                                    icon: Icon(
+                                      Icons.person_add,
+                                      color: Theme
+                                          .of(context)
+                                          .primaryColor,
+                                    ),
+                                    color: Colors.tealAccent,
+                                    label: Text("Create Account"),
+                                  )
+                                ],
+                              )),
+                        ),
+                      ),
+                    ),
+                    _googleSignInButton(context),
+                    Container(
+                      margin: EdgeInsets.only(top: 10.0),
+                      child: RichText(
+                        text: TextSpan(
+                            text: "Already have an account? \t",
+                            style: TextStyle(color: Colors.black, fontSize: 15),
+                            children: <TextSpan>[
+                              TextSpan(
+                                  text: "Sign In",
+                                  style: TextStyle(
+                                      color: Colors.teal, fontSize: 15.0),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(builder: (context) {
+                                            return LoginPage();
+                                          }));
+                                    })
+                            ]),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -364,7 +431,6 @@ String emailValidator(String value) {
     return null;
   }
 }
-
 
 Widget _googleSignInButton(BuildContext context) {
   return OutlineButton(

@@ -79,8 +79,9 @@ class RecordPage extends StatelessWidget {
               ),
             ),
             StreamBuilder(
-                stream: Firestore.instance.collection('users')
-                    .document(auth.currentUser.uid)
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(auth.currentUser.uid)
                     .collection("inventory")
                     .snapshots(),
                 builder: (context, snapshot) {
@@ -111,12 +112,13 @@ class RecordPage extends StatelessWidget {
                           child: InkWell(
                             onTap: () {
                               print(
-                                  "Tapped: ${documentSnapshot['productName']}");
+                                  "Tapped: ${documentSnapshot
+                                      .data()['productName']}");
                               Navigator.of(context).push(MaterialPageRoute(
                                   builder: (context) =>
                                       ProductHistory(
                                         productName:
-                                        documentSnapshot['productName'],
+                                        documentSnapshot.data()['productName'],
                                       )));
                             },
                             splashColor: Colors.brown,
@@ -131,12 +133,12 @@ class RecordPage extends StatelessWidget {
                                   Expanded(
                                     flex: 3,
                                     child: Text(
-                                        documentSnapshot['productName']),
+                                        documentSnapshot.data()['productName']),
                                   ),
                                   Expanded(
                                     flex: 3,
                                     child: Text(
-                                      documentSnapshot['quantity']
+                                      documentSnapshot.data()['quantity']
                                           .toString()
                                           .padLeft(5),
                                     ),
@@ -220,9 +222,9 @@ class ProductHistory extends StatelessWidget {
             ),
             Expanded(
               child: StreamBuilder(
-                  stream: Firestore.instance
+                  stream: FirebaseFirestore.instance
                       .collection('users')
-                      .document(auth.currentUser.uid)
+                      .doc(auth.currentUser.uid)
                       .collection("farm_records")
                       .where("productName", isEqualTo: productName)
                       .orderBy("dateTime", descending: true)
@@ -247,22 +249,25 @@ class ProductHistory extends StatelessWidget {
                         itemBuilder: (BuildContext buildContext, int index) {
                           DocumentSnapshot documentSnapshot =
                           snapshot.data.documents[index];
-                          Timestamp dateStamp = documentSnapshot['dateTime'];
+                          Timestamp dateStamp = documentSnapshot
+                              .data()['dateTime'];
                           DateTime date = dateStamp.toDate();
                           String formattedDate =
                           DateFormat('dd-MMM-yy').format(date);
 
-                          String price = documentSnapshot['price'] != null
-                              ? documentSnapshot['price'].toString()
+                          String price = documentSnapshot.data()['price'] !=
+                              null
+                              ? documentSnapshot.data()['price'].toString()
                               : "-";
 
-                          String quantity = documentSnapshot['quantity'] != null
-                              ? documentSnapshot['quantity'].toString()
+                          String quantity = documentSnapshot
+                              .data()['quantity'] != null
+                              ? documentSnapshot.data()['quantity'].toString()
                               : "-";
 
                           Color quantityColor =
-                          documentSnapshot['action'] == 'sale' &&
-                              documentSnapshot['quantity'] != null
+                          documentSnapshot.data()['action'] == 'sale' &&
+                              documentSnapshot.data()['quantity'] != null
                               ? Colors.red
                               : Colors.green;
 
@@ -283,7 +288,8 @@ class ProductHistory extends StatelessWidget {
                                   ),
                                   Expanded(
                                     flex: 3,
-                                    child: Text(documentSnapshot['action']),
+                                    child: Text(
+                                        documentSnapshot.data()['action']),
                                   ),
                                   Expanded(
                                     flex: 2,
@@ -377,9 +383,9 @@ class ConsolidatedSalesPage extends StatelessWidget {
             ),
             Expanded(
               child: StreamBuilder(
-                  stream: Firestore.instance
+                  stream: FirebaseFirestore.instance
                       .collection('users')
-                      .document(auth.currentUser.uid)
+                      .doc(auth.currentUser.uid)
                       .collection("farm_records")
                       .where("action", isEqualTo: "sale")
                       .orderBy("dateTime", descending: true)
@@ -404,17 +410,19 @@ class ConsolidatedSalesPage extends StatelessWidget {
                         itemBuilder: (BuildContext buildContext, int index) {
                           DocumentSnapshot documentSnapshot =
                           snapshot.data.documents[index];
-                          Timestamp dateStamp = documentSnapshot['dateTime'];
+                          Timestamp dateStamp = documentSnapshot
+                              .data()['dateTime'];
                           DateTime date = dateStamp.toDate();
                           String formattedDate =
                           DateFormat('dd-MMM-yy').format(date);
 
-                          String price = documentSnapshot['price'] != null
-                              ? documentSnapshot['price'].toString()
+                          String price = documentSnapshot.data()['price'] !=
+                              null
+                              ? documentSnapshot.data()['price'].toString()
                               : "-";
 
                           Color quantityColor =
-                          documentSnapshot['action'] == 'sale'
+                          documentSnapshot.data()['action'] == 'sale'
                               ? Colors.red
                               : Colors.green;
 
@@ -436,12 +444,13 @@ class ConsolidatedSalesPage extends StatelessWidget {
                                   Expanded(
                                     flex: 3,
                                     child: Text(
-                                        documentSnapshot['productName']),
+                                        documentSnapshot.data()['productName']),
                                   ),
                                   Expanded(
                                     flex: 2,
                                     child: Text(
-                                      documentSnapshot['quantity'].toString(),
+                                      documentSnapshot.data()['quantity']
+                                          .toString(),
                                       style: TextStyle(color: quantityColor),
                                     ),
                                   ),

@@ -10,19 +10,20 @@ class DrawerUtil extends StatelessWidget {
     return Drawer(
       child: Column(
         children: <Widget>[
-          StreamBuilder<FirebaseUser>(
+          StreamBuilder<User>(
               stream: auth.onAuthStateChanged,
               builder: (context, snapshot) {
                 return UserAccountsDrawerHeader(
-                  accountName: Text("${snapshot.data?.displayName}"),
-                  accountEmail: Text("${snapshot.data?.email}"),
+                  accountName:
+                      Text("${snapshot.data?.displayName ?? 'loading'}"),
+                  accountEmail: Text("${snapshot.data?.email ?? 'loading'}"),
                   currentAccountPicture: CircleAvatar(
                     backgroundColor:
                         Theme.of(context).platform == TargetPlatform.iOS
                             ? Colors.deepPurple
                             : Colors.white,
                     child: Text(
-                        "${snapshot.data?.displayName?.substring(0, 1)?.toUpperCase()}"),
+                        "${snapshot.data?.displayName?.substring(0, 1)?.toUpperCase() ?? 'A'}"),
                   ),
                 );
               }),

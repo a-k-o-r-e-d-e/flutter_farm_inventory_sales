@@ -42,9 +42,9 @@ class _HomePageState extends State<HomePage> {
                       child: Container(
                         height: 260,
                         child: StreamBuilder(
-                            stream: Firestore.instance
+                            stream: FirebaseFirestore.instance
                                 .collection('users')
-                                .document(auth.currentUser.uid)
+                                .doc(auth.currentUser.uid)
                                 .collection("farm_records")
                                 .where("action", isEqualTo: "sale")
                                 .orderBy("dateTime", descending: true)
@@ -52,16 +52,18 @@ class _HomePageState extends State<HomePage> {
                                 .snapshots(),
                             builder: (context, snapshot) {
                               if (!snapshot.hasData) {
-                                return Center(
-                                  child: ListView(
-                                    children: <Widget>[
-                                      CircularProgressIndicator(),
-                                      Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 10.0)),
-                                      Text("Loading...${auth.currentUser.uid}")
-                                    ],
-                                  ),
+                                return ListView(
+                                  children: <Widget>[
+                                    Container(
+                                        alignment: Alignment.center,
+                                        child: CircularProgressIndicator()),
+                                    Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 10.0)),
+                                    Container(
+                                        alignment: Alignment.center,
+                                        child: Text("Loading..."))
+                                  ],
                                 );
                               }
 
@@ -76,8 +78,9 @@ class _HomePageState extends State<HomePage> {
                                   i < snapshot.data.documents.length;
                                   i++) {
                                 DocumentSnapshot documentSnap =
-                                    snapshot.data.documents[i];
-                                Timestamp dateStamp = documentSnap['dateTime'];
+                                snapshot.data.documents[i];
+                                Timestamp dateStamp = documentSnap
+                                    .data()['dateTime'];
 //                                print(dateStamp);
                                 DateTime date = dateStamp.toDate();
 
@@ -237,19 +240,19 @@ class _HomePageState extends State<HomePage> {
                                                 index -= 1;
 
                                                 DocumentSnapshot documentSnap =
-                                                    snapshot
-                                                        .data.documents[index];
+                                                snapshot
+                                                    .data.documents[index];
                                                 Timestamp dateStamp =
-                                                    documentSnap['dateTime'];
+                                                documentSnap.data()['dateTime'];
 //                                print(dateStamp);
                                                 DateTime date =
-                                                    dateStamp.toDate();
+                                                dateStamp.toDate();
                                                 String formattedDate =
-                                                    DateFormat('dd-MMM-yy')
-                                                        .format(date);
+                                                DateFormat('dd-MMM-yy')
+                                                    .format(date);
                                                 String formattedTime =
-                                                    DateFormat('kk:mm')
-                                                        .format(date);
+                                                DateFormat('kk:mm')
+                                                    .format(date);
 
                                                 return Card(
                                                   elevation: 1,
@@ -278,8 +281,8 @@ class _HomePageState extends State<HomePage> {
                                                         Expanded(
 //                                            flex: 2,
                                                           child: Text(
-                                                            documentSnap[
-                                                                'productName'],
+                                                            documentSnap.data()[
+                                                            'productName'],
                                                           ),
                                                         ),
                                                         Expanded(
@@ -289,15 +292,17 @@ class _HomePageState extends State<HomePage> {
                                                                         .only(
                                                                     left: 8.0),
                                                             child: Text(
-                                                                documentSnap[
-                                                                        'quantity']
+                                                                documentSnap
+                                                                    .data()[
+                                                                'quantity']
                                                                     .toString()),
                                                           ),
                                                         ),
                                                         Expanded(
                                                           child: Text(
-                                                              documentSnap[
-                                                                      'price']
+                                                              documentSnap
+                                                                  .data()[
+                                                              'price']
                                                                   .toString()),
                                                         )
                                                       ],
@@ -587,19 +592,24 @@ class RootPage extends StatefulWidget {
 class _RootPageState extends State<RootPage> {
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<FirebaseUser>(
+    return StreamBuilder<User>(
         stream: AuthFireBase().onAuthStateChanged,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.active) {
+          if (snapshot.hasData) {
             final bool isLoggedIn = snapshot.hasData;
 //            if (Navigator.of(context).canPop()) Navigator.of(context).pop();
             print("isLoggedIn: $isLoggedIn");
 
-            return isLoggedIn ? HomePage() : LoginPage();
+            return HomePage();
+          } else {
+            return LoginPage();
           }
-          return Scaffold(
-              appBar: AppBar(),
-              body: Center(child: CircularProgressIndicator()));
+
+
+          // return Scaffold(
+          //     appBar: AppBar(),
+          //     body: Center(child: CircularProgressIndicator()));
+          // });
         });
   }
 }

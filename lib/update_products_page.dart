@@ -158,7 +158,7 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
                                     if (snapshot.hasData) {
                                       return Text(productsDropdown
                                           .products[snapshot.data]
-                                      ['currentPrice']
+                                          .data()['currentPrice']
                                           .toString()
                                       );
                                     }
@@ -205,24 +205,24 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
     var productPrice = int.parse(_priceTextController.text);
     var productQuantity = int.parse(_quantityTextController.text);
 
-    await Firestore.instance
+    await FirebaseFirestore.instance
         .collection('users')
-        .document(auth.currentUser.uid)
+        .doc(auth.currentUser.uid)
         .collection('inventory')
         .where('productName', isEqualTo: productName)
-        .getDocuments()
+        .get()
         .then((value) {
-      if (value.documents.isNotEmpty) {
+      if (value.docs.isNotEmpty) {
         // that is product already exist in Inventory
         showDialog(
             context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  content: Container(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text("Product Already Exist in Inventory"),
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Container(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text("Product Already Exist in Inventory"),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: RaisedButton(
@@ -239,20 +239,20 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
               });
         } else {
         // if product doesn't exist
-        var prodCollection = Firestore.instance
+        var prodCollection = FirebaseFirestore.instance
             .collection('users')
-            .document(auth.currentUser.uid)
+            .doc(auth.currentUser.uid)
             .collection('inventory');
-        var recordCollection = Firestore.instance
+        var recordCollection = FirebaseFirestore.instance
             .collection('users')
-            .document(auth.currentUser.uid)
+            .doc(auth.currentUser.uid)
             .collection('farm_records');
         Map<String, dynamic> productMap = Map();
         productMap.putIfAbsent('productName', () => productName);
         productMap.putIfAbsent('currentPrice', () => productPrice);
         productMap.putIfAbsent('quantity', () => productQuantity);
 
-        Firestore.instance
+        FirebaseFirestore.instance
             .runTransaction((transaction) async {
               prodCollection.add(productMap);
               recordCollection.add({
@@ -323,17 +323,17 @@ class _UpdateProductsPageState extends State<UpdateProductsPage> {
     var productPrice = int.parse(_priceTextController.text);
     var productName = _productNameTextController.text;
 
-    var prodCollection = Firestore.instance.collection('users')
-        .document(auth.currentUser.uid).collection('farm_records');
+    var prodCollection = FirebaseFirestore.instance.collection('users')
+        .doc(auth.currentUser.uid).collection('farm_records');
 
     var documentSnapshot =
     productsDropdown.products[productsDropdown.selectedItem];
-    var oldPrice = documentSnapshot['currentPrice'];
-    Firestore.instance
+    var oldPrice = documentSnapshot.data()['currentPrice'];
+    FirebaseFirestore.instance
         .runTransaction((transaction) async {
       DocumentSnapshot freshSnap =
       await transaction.get(documentSnapshot.reference);
-      await transaction
+      transaction
           .update(freshSnap.reference, {'currentPrice': productPrice});
       prodCollection.add({
         'action': 'Price Change',

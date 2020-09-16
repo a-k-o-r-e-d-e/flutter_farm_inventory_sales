@@ -32,8 +32,10 @@ class _AddStockPageState extends State<AddStockPage> {
   void _handleAddStock() async {
     var quantity = int.parse(_quantityTextController.text);
 
-    var farmRecordsCollection = Firestore.instance.collection('users')
-        .document(auth.currentUser.uid).collection('farm_records');
+    var farmRecordsCollection = FirebaseFirestore.instance
+        .collection('users')
+        .doc(auth.currentUser.uid)
+        .collection('farm_records');
 
     Map<String, dynamic> farmRecordsMap = Map();
     farmRecordsMap.putIfAbsent('action', () => "addStock");
@@ -42,15 +44,15 @@ class _AddStockPageState extends State<AddStockPage> {
     farmRecordsMap.putIfAbsent('dateTime', () => DateTime.now().toUtc());
 
     var documentSnapshot = documents[dropDownValue];
-    Firestore.instance
+    FirebaseFirestore.instance
         .runTransaction((transaction) async {
-      DocumentSnapshot freshSnap =
-      await transaction.get(documentSnapshot.reference);
-      await transaction.update(freshSnap.reference,
-          {'quantity': documentSnapshot['quantity'] + quantity});
-      farmRecordsCollection.add(farmRecordsMap);
-    })
-        .whenComplete(() => showDialog(
+          DocumentSnapshot freshSnap =
+              await transaction.get(documentSnapshot.reference);
+          await transaction.update(freshSnap.reference,
+              {'quantity': documentSnapshot.data()['quantity'] + quantity});
+          farmRecordsCollection.add(farmRecordsMap);
+        })
+        .then((_) => showDialog(
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
@@ -200,20 +202,20 @@ class _SellStockPageState extends State<SellStockPage> {
 
     var quantity = int.parse(_qtyTxtController.text);
     var stockDocumentSnapshot = products[dropDownValue];
-    var salesCollection = Firestore.instance.collection('users')
-        .document(auth.currentUser.uid).collection('farm_records');
+    var salesCollection = FirebaseFirestore.instance.collection('users')
+        .doc(auth.currentUser.uid).collection('farm_records');
     Map<String, dynamic> salesMap = Map();
     salesMap.putIfAbsent('action', () => 'sale');
     salesMap.putIfAbsent('productName', () => dropDownValue);
     salesMap.putIfAbsent('price', () => netPriceTxt);
     salesMap.putIfAbsent('quantity', () => quantity);
     salesMap.putIfAbsent('dateTime', () => DateTime.now().toUtc());
-    print(stockDocumentSnapshot['productName']);
-    Firestore.instance.runTransaction((transaction) async {
+    print(stockDocumentSnapshot.data()['productName']);
+    FirebaseFirestore.instance.runTransaction((transaction) async {
       DocumentSnapshot freshSnap =
       await transaction.get(stockDocumentSnapshot.reference);
       await transaction.update(freshSnap.reference,
-          {'quantity': stockDocumentSnapshot['quantity'] - quantity});
+          {'quantity': stockDocumentSnapshot.data()['quantity'] - quantity});
       salesCollection.add(salesMap);
     }).whenComplete(() =>
         showDialog(
@@ -268,7 +270,7 @@ class _SellStockPageState extends State<SellStockPage> {
 
 
   bool isQuantityAvailable(val) {
-    if (int.parse(val) <= products[dropDownValue]['quantity']) {
+    if (int.parse(val) <= products[dropDownValue].data()['quantity']) {
       return true;
     }
     return false;
@@ -343,7 +345,7 @@ class _SellStockPageState extends State<SellStockPage> {
                                                     if (snapshot.hasData) {
                                                       return Text(
                                                         products[snapshot.data]
-                                                        ['currentPrice']
+                                                            .data()['currentPrice']
                                                             .toString(),
                                                       );
                                                     }
@@ -401,7 +403,7 @@ class _SellStockPageState extends State<SellStockPage> {
                                                         .text.isNotEmpty) {
                                                       // products[snapshot.data]['currentPrice'] should be a number on Database else an error occurs
                                                       netPriceTxt = products[
-                                                      snapshot.data]
+                                                      snapshot.data].data()
                                                       ['currentPrice'] *
                                                           int.parse(
                                                               _qtyTxtController
@@ -459,7 +461,7 @@ Widget _buildListItem(BuildContext context, DocumentSnapshot documentSnapshot) {
         children: <Widget>[
           Expanded(
             child: Text(
-              documentSnapshot['productName'],
+              documentSnapshot.data()['productName'],
               style: Theme
                   .of(context)
                   .textTheme
@@ -472,7 +474,7 @@ Widget _buildListItem(BuildContext context, DocumentSnapshot documentSnapshot) {
           Container(
             padding: EdgeInsets.only(right: 5),
             child: Text(
-              documentSnapshot['quantity'].toString().padLeft(5),
+              documentSnapshot.data()['quantity'].toString().padLeft(5),
               style: Theme
                   .of(context)
                   .textTheme
@@ -522,16 +524,16 @@ Widget _buildAvailableStockCard(BuildContext context) {
                     builder: (context, snapshot) {
                       Stream stream;
                       if (snapshot.hasData) {
-                        stream = Firestore.instance
+                        stream = FirebaseFirestore.instance
                             .collection('users')
-                            .document(auth.currentUser.uid)
+                            .doc(auth.currentUser.uid)
                             .collection("inventory")
                             .where('productName', isEqualTo: snapshot.data)
                             .snapshots();
                       } else {
-                        stream = Firestore.instance
+                        stream = FirebaseFirestore.instance
                             .collection('users')
-                            .document(auth.currentUser.uid)
+                            .doc(auth.currentUser.uid)
                             .collection("inventory")
                             .snapshots();
                       }
@@ -658,8 +660,8 @@ class _ProductsDropdownState extends State<ProductsDropdown> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             StreamBuilder(
-                stream: Firestore.instance.collection('users')
-                    .document(auth.currentUser.uid)
+                stream: FirebaseFirestore.instance.collection('users')
+                    .doc(auth.currentUser.uid)
                     .collection("inventory")
                     .snapshots(),
                 builder: (context, snapshot) {
