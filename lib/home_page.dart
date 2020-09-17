@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -8,7 +7,6 @@ import 'add_stock_sell_stock_pages.dart';
 import 'auth.dart';
 import 'drawer_util.dart';
 import 'farm_records_page.dart';
-import 'login_signup_pages.dart';
 import 'update_products_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -52,8 +50,9 @@ class _HomePageState extends State<HomePage> {
                                 .snapshots(),
                             builder: (context, snapshot) {
                               if (!snapshot.hasData) {
-                                return ListView(
-                                  children: <Widget>[
+                                return Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
                                     Container(
                                         alignment: Alignment.center,
                                         child: CircularProgressIndicator()),
@@ -62,7 +61,7 @@ class _HomePageState extends State<HomePage> {
                                             const EdgeInsets.only(top: 10.0)),
                                     Container(
                                         alignment: Alignment.center,
-                                        child: Text("Loading..."))
+                                        child: Text("Loading...")),
                                   ],
                                 );
                               }
@@ -75,28 +74,30 @@ class _HomePageState extends State<HomePage> {
                               List yearlySalesList = [];
                               DateTime currentDate = DateTime.now();
                               for (int i = 0;
-                                  i < snapshot.data.documents.length;
-                                  i++) {
+                              i < snapshot.data.docs.length;
+                              i++) {
                                 DocumentSnapshot documentSnap =
-                                snapshot.data.documents[i];
+                                snapshot.data.docs[i];
                                 Timestamp dateStamp = documentSnap
                                     .data()['dateTime'];
 //                                print(dateStamp);
                                 DateTime date = dateStamp.toDate();
 
                                 salesList
-                                    .add(snapshot.data.documents[i]['price']);
+                                    .add(snapshot.data.docs[i].data()['price']);
                                 if (date.year == currentDate.year) {
                                   yearlySalesList
-                                      .add(snapshot.data.documents[i]['price']);
+                                      .add(
+                                      snapshot.data.docs[i].data()['price']);
 
                                   if (date.month == currentDate.month) {
                                     monthlySalesList.add(
-                                        snapshot.data.documents[i]['price']);
+                                        snapshot.data.docs[i].data()['price']);
 
                                     if (date.day == currentDate.day) {
                                       dailySalesList.add(
-                                          snapshot.data.documents[i]['price']);
+                                          snapshot.data.docs[i]
+                                              .data()['price']);
                                     }
                                   }
                                 }
@@ -142,106 +143,116 @@ class _HomePageState extends State<HomePage> {
                                                 child: Text(
                                                   "Recently Sold",
                                                   style: TextStyle(
-                                                      color: Theme.of(context)
+                                                      color: Theme
+                                                          .of(context)
                                                           .primaryColor,
                                                       fontSize: 20,
                                                       fontWeight:
-                                                          FontWeight.bold),
+                                                      FontWeight.bold),
                                                 ),
                                               ),
                                             ),
                                             Divider(),
+                                            Padding(
+                                              padding:
+                                              const EdgeInsets.all(
+                                                  4.0),
+                                              child: Row(
+                                                children: <Widget>[
+                                                  Expanded(
+//                                            flex: 2,
+                                                    child: Padding(
+                                                      padding:
+                                                      const EdgeInsets
+                                                          .only(
+                                                          left: 4),
+                                                      child: Text("Date",
+                                                          style: TextStyle(
+                                                              color: Theme
+                                                                  .of(
+                                                                  context)
+                                                                  .primaryColor,
+                                                              fontWeight:
+                                                              FontWeight
+                                                                  .bold)),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: Padding(
+                                                      padding:
+                                                      const EdgeInsets
+                                                          .only(
+                                                          left: 4.0),
+                                                      child: Text("Time",
+                                                          style: TextStyle(
+                                                              color: Theme
+                                                                  .of(
+                                                                  context)
+                                                                  .primaryColor,
+                                                              fontWeight:
+                                                              FontWeight
+                                                                  .bold)),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+//                                            flex: 2,
+                                                    child: Text("Product",
+                                                        style: TextStyle(
+                                                            color: Theme
+                                                                .of(
+                                                                context)
+                                                                .primaryColor,
+                                                            fontWeight:
+                                                            FontWeight
+                                                                .bold)),
+                                                  ),
+                                                  Expanded(
+                                                    child: Container(
+                                                        margin:
+                                                        const EdgeInsets
+                                                            .only(
+                                                            left: 4),
+                                                        child: Text('Qty',
+                                                            style: TextStyle(
+                                                                color: Theme
+                                                                    .of(
+                                                                    context)
+                                                                    .primaryColor,
+                                                                fontWeight:
+                                                                FontWeight
+                                                                    .bold))),
+                                                  ),
+                                                  Expanded(
+                                                    child: Text('Price',
+                                                        style: TextStyle(
+                                                            color: Theme
+                                                                .of(
+                                                                context)
+                                                                .primaryColor,
+                                                            fontWeight:
+                                                            FontWeight
+                                                                .bold)),
+                                                  )
+                                                ],
+                                              ),
+                                            ),
+                                            snapshot.data.docs.length == 0
+                                                ? Expanded(
+                                              child: Container(
+                                                alignment: Alignment.center,
+                                                child: Text(
+                                                    "No Sales Records Found!!!"),
+                                              ),
+                                            )
+                                                :
                                             ListView.builder(
                                               shrinkWrap: true,
                                               itemCount: snapshot
-                                                      .data.documents.length +
-                                                  1,
+                                                  .data.docs.length,
                                               itemBuilder: (context, index) {
-                                                if (index == 0) {
-                                                  return Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            4.0),
-                                                    child: Row(
-                                                      children: <Widget>[
-                                                        Expanded(
-//                                            flex: 2,
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                        .only(
-                                                                    left: 4),
-                                                            child: Text("Date",
-                                                                style: TextStyle(
-                                                                    color: Theme.of(
-                                                                            context)
-                                                                        .primaryColor,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold)),
-                                                          ),
-                                                        ),
-                                                        Expanded(
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                        .only(
-                                                                    left: 4.0),
-                                                            child: Text("Time",
-                                                                style: TextStyle(
-                                                                    color: Theme.of(
-                                                                            context)
-                                                                        .primaryColor,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold)),
-                                                          ),
-                                                        ),
-                                                        Expanded(
-//                                            flex: 2,
-                                                          child: Text("Product",
-                                                              style: TextStyle(
-                                                                  color: Theme.of(
-                                                                          context)
-                                                                      .primaryColor,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold)),
-                                                        ),
-                                                        Expanded(
-                                                          child: Container(
-                                                              margin:
-                                                                  const EdgeInsets
-                                                                          .only(
-                                                                      left: 4),
-                                                              child: Text('Qty',
-                                                                  style: TextStyle(
-                                                                      color: Theme.of(
-                                                                              context)
-                                                                          .primaryColor,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold))),
-                                                        ),
-                                                        Expanded(
-                                                          child: Text('Price',
-                                                              style: TextStyle(
-                                                                  color: Theme.of(
-                                                                          context)
-                                                                      .primaryColor,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold)),
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }
-                                                index -= 1;
-
                                                 DocumentSnapshot documentSnap =
                                                 snapshot
-                                                    .data.documents[index];
+                                                    .data.docs[index];
                                                 Timestamp dateStamp =
                                                 documentSnap.data()['dateTime'];
 //                                print(dateStamp);
@@ -258,7 +269,7 @@ class _HomePageState extends State<HomePage> {
                                                   elevation: 1,
                                                   child: Padding(
                                                     padding: const EdgeInsets
-                                                            .symmetric(
+                                                        .symmetric(
                                                         horizontal: 4.0,
                                                         vertical: 6),
                                                     child: Row(
@@ -271,9 +282,9 @@ class _HomePageState extends State<HomePage> {
                                                         Expanded(
                                                           child: Container(
                                                             margin:
-                                                                const EdgeInsets
-                                                                        .only(
-                                                                    left: 6.0),
+                                                            const EdgeInsets
+                                                                .only(
+                                                                left: 6.0),
                                                             child: Text(
                                                                 formattedTime),
                                                           ),
@@ -288,9 +299,9 @@ class _HomePageState extends State<HomePage> {
                                                         Expanded(
                                                           child: Container(
                                                             margin:
-                                                                const EdgeInsets
-                                                                        .only(
-                                                                    left: 8.0),
+                                                            const EdgeInsets
+                                                                .only(
+                                                                left: 8.0),
                                                             child: Text(
                                                                 documentSnap
                                                                     .data()[
@@ -584,32 +595,3 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class RootPage extends StatefulWidget {
-  @override
-  _RootPageState createState() => _RootPageState();
-}
-
-class _RootPageState extends State<RootPage> {
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User>(
-        stream: AuthFireBase().onAuthStateChanged,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            final bool isLoggedIn = snapshot.hasData;
-//            if (Navigator.of(context).canPop()) Navigator.of(context).pop();
-            print("isLoggedIn: $isLoggedIn");
-
-            return HomePage();
-          } else {
-            return LoginPage();
-          }
-
-
-          // return Scaffold(
-          //     appBar: AppBar(),
-          //     body: Center(child: CircularProgressIndicator()));
-          // });
-        });
-  }
-}

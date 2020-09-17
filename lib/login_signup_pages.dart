@@ -2,6 +2,7 @@ import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_farm_inventory/auth.dart';
+import 'package:flutter_farm_inventory/main.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 import 'home_page.dart';
@@ -29,6 +30,8 @@ class _LoginPageState extends State<LoginPage> {
 
     await _baseAuth.signInWithEmailAndPassword(_email, _password).then((
         response) {
+      // response.user.reload();
+
       if (!response.user.emailVerified) {
         showDialog(
             context: context,
@@ -194,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
                                       color: Colors.teal, fontSize: 18.0),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
-                                      Navigator.of(context).push(
+                                      Navigator.of(context).pushReplacement(
                                           MaterialPageRoute(builder: (context) {
                                             return SignUpPage();
                                           }));
@@ -244,33 +247,59 @@ class _SignUpPageState extends State<SignUpPage> {
       _loading = true;
     });
 
+
     await _baseAuth
         .signUpWithEmailAndPassword(_fullName, _email, _password)
         .then((value) {
-      print(value);
-      Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-        return HomePage();
-      }));
+      // print(value);
+
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Container(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text("User Successfully Created"),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RaisedButton(
+                          child: Text("Ok!"),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (context) {
+                                  return CheckAuth();
+                                }));
+                          }),
+                    )
+                  ],
+                ),
+              ),
+            );
+          });
     }).catchError((error) {
       print("Error: ${error.code}");
       print("Error Type: ${error.runtimeType}");
 
-      String errorMsg;
+      String dialogMsg;
+
       switch (error.code) {
         case "email-already-in-use":
-          errorMsg = "This email is already in use.";
+          dialogMsg = "This email is already in use.";
           break;
         case "weak-password":
-          errorMsg = "The password must be 6 characters long or more.";
+          dialogMsg = "The password must be 6 characters long or more.";
           break;
         case "invalid-email":
-          errorMsg = "Email is invalid";
+          dialogMsg = "Email is invalid";
           break;
         case "operation-not-allowed":
-          errorMsg = "User Creation by email and Password not enabled";
+          dialogMsg = "User Creation by email and Password not enabled";
           break;
         default:
-          errorMsg = "An Undefined Error Occurred";
+          dialogMsg = "An Undefined Error Occurred";
       }
       showDialog(
           context: context,
@@ -280,7 +309,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(errorMsg),
+                    Text(dialogMsg),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: RaisedButton(
@@ -402,9 +431,9 @@ class _SignUpPageState extends State<SignUpPage> {
                                       color: Colors.teal, fontSize: 15.0),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
-                                      Navigator.of(context).push(
+                                      Navigator.of(context).pushReplacement(
                                           MaterialPageRoute(builder: (context) {
-                                            return LoginPage();
+                                            return CheckAuth();
                                           }));
                                     })
                             ]),
@@ -494,38 +523,47 @@ Widget _buildHeadingAndLogo({String heading}) {
   );
 }
 
-class CustomTextField extends StatelessWidget {
+class CustomTextField extends StatefulWidget {
   final FormFieldValidator<String> validator;
   final FormFieldSetter<String> onSaved;
   final String label;
   final Icon icon;
   final bool obscureText;
   final TextEditingController textController;
+  bool _hideTxt;
 
-  final double fontSize = 13.5;
 
   CustomTextField({this.icon,
     this.label,
     this.obscureText = false,
     this.validator,
     this.onSaved,
-    this.textController});
+    this.textController}) {
+    this._hideTxt = this.obscureText;
+  }
+
+  @override
+  _CustomTextFieldState createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+  final double fontSize = 13.5;
 
   @override
   Widget build(BuildContext context) {
     return Container(
         padding: const EdgeInsets.all(5.0),
         child: TextFormField(
-          obscureText: obscureText,
-          controller: textController,
-          validator: validator,
+          obscureText: widget._hideTxt,
+          controller: widget.textController,
+          validator: widget.validator,
 //          autofocus: true,
-          onSaved: onSaved,
+          onSaved: widget.onSaved,
           style: TextStyle(fontSize: fontSize),
           decoration: InputDecoration(
               hintStyle:
               TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
-              labelText: label,
+              labelText: widget.label,
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide(
@@ -543,13 +581,24 @@ class CustomTextField extends StatelessWidget {
                   width: 3,
                 ),
               ),
+              suffixIcon: widget.obscureText ? IconButton(
+                icon: Icon(
+                  Icons.remove_red_eye,
+                  color: widget._hideTxt ? Theme
+                      .of(context)
+                      .primaryColor : Colors.grey,
+                ),
+                onPressed: () {
+                  setState(() => widget._hideTxt = !widget._hideTxt);
+                },
+              ) : null,
               prefixIcon: Padding(
                 padding: EdgeInsets.only(left: 30, right: 10),
                 child: IconTheme(
                   data: IconThemeData(color: Theme
                       .of(context)
                       .primaryColor),
-                  child: icon,
+                  child: widget.icon,
                 ),
               )),
         ));

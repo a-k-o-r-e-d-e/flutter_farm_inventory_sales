@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_farm_inventory/auth.dart';
+
 import 'util_functions.dart';
 
 var dropDownValue;
@@ -48,7 +49,7 @@ class _AddStockPageState extends State<AddStockPage> {
         .runTransaction((transaction) async {
           DocumentSnapshot freshSnap =
               await transaction.get(documentSnapshot.reference);
-          await transaction.update(freshSnap.reference,
+          transaction.update(freshSnap.reference,
               {'quantity': documentSnapshot.data()['quantity'] + quantity});
           farmRecordsCollection.add(farmRecordsMap);
         })
@@ -555,15 +556,18 @@ Widget _buildAvailableStockCard(BuildContext context) {
                                 ),
                               );
                             }
-
-                            return ListView.builder(
-//                            itemExtent: ,
-                                shrinkWrap: true,
-                                itemCount: snapshot.data.documents.length,
-                                itemBuilder: (context, index) =>
-                                    _buildListItem(
-                                        context,
-                                        snapshot.data.documents[index]));
+                            return snapshot.data.docs.isEmpty
+                                ? Container(
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                        "No Farm Products Found In Database. Please Create A Product First before you continue"),
+                                  )
+                                : ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: snapshot.data.docs.length,
+                                    itemBuilder: (context, index) =>
+                                        _buildListItem(context,
+                                            snapshot.data.docs[index]));
                           });
                     },
                   ),
@@ -671,11 +675,11 @@ class _ProductsDropdownState extends State<ProductsDropdown> {
 
                   widget.products.clear();
                   var itemLists = List<String>.generate(
-                      snapshot.data.documents.length, (int index) {
+                      snapshot.data.docs.length, (int index) {
                     widget.products.putIfAbsent(
-                        snapshot.data.documents[index]['productName'],
-                            () => snapshot.data.documents[index]);
-                    return snapshot.data.documents[index]['productName'];
+                        snapshot.data.docs[index].data()['productName'],
+                            () => snapshot.data.docs[index]);
+                    return snapshot.data.docs[index].data()['productName'];
                   });
                   print("Keys: ${widget.products.keys}");
 //                  controller.add("Test");

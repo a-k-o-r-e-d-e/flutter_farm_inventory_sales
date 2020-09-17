@@ -14,7 +14,7 @@ abstract class BaseAuth {
   Future<UserCredential> signUpWithEmailAndPassword(String fullName,
       String email, String password);
 
-  Future<void> signOut();
+   signOut();
 
   Future<void> resetPassword(String email);
 
@@ -93,7 +93,7 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
   }
 
   @override
-  Future<void> signOut() {
+  signOut() {
     _firebaseAuth.signOut();
   }
 
