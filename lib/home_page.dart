@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'add_stock_sell_stock_pages.dart';
 import 'auth.dart';
 import 'drawer_util.dart';
-import 'farm_records_page.dart';
+import 'records_page.dart';
 import 'update_products_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -225,38 +225,40 @@ class _HomePageState extends State<HomePage> {
                                                   Expanded(
                                                     child: Text('Price',
                                                         style: TextStyle(
-                                                            color: Theme
-                                                                .of(
-                                                                context)
+                                                            color: Theme.of(
+                                                                    context)
                                                                 .primaryColor,
                                                             fontWeight:
-                                                            FontWeight
-                                                                .bold)),
+                                                                FontWeight
+                                                                    .bold)),
                                                   )
                                                 ],
                                               ),
                                             ),
-                                            snapshot.data.docs.length == 0
+                                            snapshot.data.docs.isEmpty
                                                 ? Expanded(
-                                              child: Container(
-                                                alignment: Alignment.center,
-                                                child: Text(
-                                                    "No Sales Records Found!!!"),
-                                              ),
-                                            )
-                                                :
-                                            ListView.builder(
-                                              shrinkWrap: true,
-                                              itemCount: snapshot
-                                                  .data.docs.length,
-                                              itemBuilder: (context, index) {
-                                                DocumentSnapshot documentSnap =
-                                                snapshot
-                                                    .data.docs[index];
-                                                Timestamp dateStamp =
-                                                documentSnap.data()['dateTime'];
+                                                    child: Container(
+                                                      alignment:
+                                                          Alignment.center,
+                                                      child: Text(
+                                                          "No Sales Records Found!!!"),
+                                                    ),
+                                                  )
+                                                : ListView.builder(
+                                                    shrinkWrap: true,
+                                                    itemCount: snapshot
+                                                        .data.docs.length,
+                                                    itemBuilder:
+                                                        (context, index) {
+                                                      DocumentSnapshot
+                                                          documentSnap =
+                                                          snapshot
+                                                              .data.docs[index];
+                                                      Timestamp dateStamp =
+                                                          documentSnap.data()[
+                                                              'dateTime'];
 //                                print(dateStamp);
-                                                DateTime date =
+                                                      DateTime date =
                                                 dateStamp.toDate();
                                                 String formattedDate =
                                                 DateFormat('dd-MMM-yy')
@@ -496,7 +498,7 @@ class _HomePageState extends State<HomePage> {
                                 .primaryColor),
                         onPressed: () {
                           Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) => RecordPage()));
+                              builder: (context) => RecordsPage()));
                         },
                         label: Text("Records"),
                       ),

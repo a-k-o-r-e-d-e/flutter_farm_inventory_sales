@@ -3,13 +3,14 @@ import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_farm_inventory/auth.dart';
+import 'package:flutter_farm_inventory/update_products_page.dart';
 import 'package:intl/intl.dart';
 
 import 'home_page.dart';
 
 AuthFireBase auth = AuthFireBase();
 
-class RecordPage extends StatelessWidget {
+class RecordsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,12 +99,43 @@ class RecordPage extends StatelessWidget {
                     );
                   }
 
-                  return ListView.builder(
+                  return snapshot.data.docs.isEmpty ? Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      alignment: Alignment.center,
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                            text:
+                            "No Farm Products Found In Database. Please you have to ",
+                            style: DefaultTextStyle
+                                .of(context)
+                                .style,
+                            children: <TextSpan>[
+                              TextSpan(text: "create a product",
+                                  style: TextStyle(
+                                      decoration: TextDecoration.underline,
+                                      color: Theme
+                                          .of(context)
+                                          .primaryColor),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  UpdateProductsPage()));
+                                    }),
+                              TextSpan(text: " first before you can continue")
+                            ]),
+
+                      ),
+                    ),
+                  ) : ListView.builder(
                       shrinkWrap: true,
                       itemCount: snapshot.data.documents.length,
                       itemBuilder: (BuildContext buildContext, int index) {
                         DocumentSnapshot documentSnapshot =
-                            snapshot.data.documents[index];
+                        snapshot.data.documents[index];
                         return Card(
                           // color: Theme.of(context).accentColor,
                           elevation: 1,
@@ -365,7 +397,7 @@ class ConsolidatedSalesPage extends StatelessWidget {
                   ),
                   Expanded(
                     flex: 3,
-                    child: Text("Action"),
+                    child: Text("Product"),
                   ),
                   Expanded(
                     flex: 3,
@@ -404,7 +436,11 @@ class ConsolidatedSalesPage extends StatelessWidget {
                       );
                     }
 
-                    return ListView.builder(
+                    return snapshot.data.docs.isEmpty ? Container(
+                      alignment: Alignment.center,
+                      child: Text(
+                          "No Sales Records Found!!!"),
+                    ) : ListView.builder(
                         shrinkWrap: true,
                         itemCount: snapshot.data.documents.length,
                         itemBuilder: (BuildContext buildContext, int index) {

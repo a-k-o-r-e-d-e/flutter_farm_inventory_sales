@@ -1,20 +1,19 @@
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_farm_inventory/auth.dart';
 import 'package:flutter_farm_inventory/main.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 
-import 'home_page.dart';
 import 'util_functions.dart';
 
-BaseAuth _baseAuth = AuthFireBase();
+AuthFireBase _baseAuth = AuthFireBase();
 
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
 }
-
 
 class _LoginPageState extends State<LoginPage> {
   final formKey = GlobalKey<FormState>();
@@ -24,41 +23,40 @@ class _LoginPageState extends State<LoginPage> {
 
 // Internet Connectivity test and Form Validation should have been done already before calling this method
   performNormalLogin() async {
-    setState(() {
-      _loading = true;
-    });
+    toggleLoading();
 
     await _baseAuth.signInWithEmailAndPassword(_email, _password).then((
         response) {
       // response.user.reload();
-
-      if (!response.user.emailVerified) {
-        showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                content: Container(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Text("Please verify account first"),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: RaisedButton(
-                            child: Text("Ok!"),
-                            onPressed: () {
-                              Navigator.pop(context);
-                            }),
-                      )
-                    ],
-                  ),
-                ),
-              );
-            });
-      }
+      //
+      // if (!response.user.emailVerified) {
+      //   showDialog(
+      //       context: context,
+      //       builder: (BuildContext context) {
+      //         return AlertDialog(
+      //           content: Container(
+      //             child: Column(
+      //               mainAxisSize: MainAxisSize.min,
+      //               children: <Widget>[
+      //                 Text("Please verify account first"),
+      //                 Padding(
+      //                   padding: const EdgeInsets.all(8.0),
+      //                   child: RaisedButton(
+      //                       child: Text("Ok!"),
+      //                       onPressed: () {
+      //                         Navigator.pop(context);
+      //                       }),
+      //                 )
+      //               ],
+      //             ),
+      //           ),
+      //         );
+      //       });
+      // }
+      checkUserVerification(response.user, context);
     }).catchError((error) {
       String errorMsg;
-
+      print("Error: ${error.runtimeType}");
       switch (error.code) {
       //TODO:: Handle Wrong Password case
 
@@ -107,10 +105,16 @@ class _LoginPageState extends State<LoginPage> {
           });
     }).whenComplete(() {
       // Loading Dialog
-      setState(() {
-        _loading = false;
-      });
+      toggleLoading();
     });
+  }
+
+  toggleLoading() {
+    if (this.mounted) {
+      setState(() {
+        _loading = !_loading;
+      });
+    }
   }
 
 
@@ -177,7 +181,7 @@ class _LoginPageState extends State<LoginPage> {
                                         context, formKey, performNormalLogin);
                                   },
                                 ),
-                                _googleSignInButton(context),
+                                _googleSignInButton(context, toggleLoading),
                               ],
                             ),
                           ),
@@ -241,27 +245,32 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
+  toggleLoading() {
+    setState(() {
+      _loading = !_loading;
+    });
+  }
+
   // Internet Connectivity test and Form Validation should have been done already before calling this method
   performSignUp() async {
-    setState(() {
-      _loading = true;
-    });
+    toggleLoading();
 
 
     await _baseAuth
         .signUpWithEmailAndPassword(_fullName, _email, _password)
         .then((value) {
-      // print(value);
-
+      _baseAuth.signOut();
       showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
+              title: Text("Success!"),
               content: Container(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text("User Successfully Created"),
+                    Text(
+                        "User Successfully Created. Please Check your email for verification mail"),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: RaisedButton(
@@ -324,9 +333,7 @@ class _SignUpPageState extends State<SignUpPage> {
             );
           });
     }).whenComplete(() {
-      setState(() {
-        _loading = false;
-      });
+      toggleLoading();
     });
   }
 
@@ -417,7 +424,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                       ),
                     ),
-                    _googleSignInButton(context),
+                    _googleSignInButton(context, toggleLoading),
                     Container(
                       margin: EdgeInsets.only(top: 10.0),
                       child: RichText(
@@ -461,13 +468,11 @@ String emailValidator(String value) {
   }
 }
 
-Widget _googleSignInButton(BuildContext context) {
+Widget _googleSignInButton(BuildContext context, Function toggleLoading) {
   return OutlineButton(
     onPressed: () {
-      _baseAuth.signInWithGoogle().whenComplete(() {
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-          return HomePage();
-        }));
+      checkInternetConnection(context, () {
+        _performGoogleSignIn(context, toggleLoading);
       });
     },
     splashColor: Colors.grey,
@@ -498,6 +503,37 @@ Widget _googleSignInButton(BuildContext context) {
       ),
     ),
   );
+}
+
+void checkUserVerification(User user, BuildContext context) {
+  if (!user.emailVerified) {
+    print("XXX: Point C");
+
+    _baseAuth.signOut();
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: Container(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                      "Unverified Email: Please Check your Mail for verification mail"),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: RaisedButton(
+                        child: Text("Ok!"),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        }),
+                  )
+                ],
+              ),
+            ),
+          );
+        });
+  }
 }
 
 Widget _buildHeadingAndLogo({String heading}) {
@@ -603,4 +639,64 @@ class _CustomTextFieldState extends State<CustomTextField> {
               )),
         ));
   }
+}
+
+_performGoogleSignIn(BuildContext context, Function toggleLoading) {
+  toggleLoading();
+
+  _baseAuth.signInWithGoogle().then((response) {
+    print("XXX : Point A");
+    checkUserVerification(response.user, context);
+  }).catchError((error) {
+    print("Error: ${error.code}");
+    print("Error Type: ${error.runtimeType}");
+
+    String dialogMsg;
+
+    switch (error.code) {
+      case "account-exists-with-different-credential":
+        dialogMsg = "An Account Already exists for this email.";
+        break;
+      case "invalid-credential":
+        dialogMsg = "An Error Occurred, please try again later";
+        break;
+      case "operation-not-allowed":
+        dialogMsg = "Operation not allowed. Please contact admin";
+        break;
+      case "user-disabled":
+        dialogMsg = "User has been disabled. Please contact admin";
+        break;
+      case "user-not-found":
+        dialogMsg = "User not found.";
+        break;
+
+      default:
+        dialogMsg = "Please Contact admin";
+    }
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Error"),
+            content: Container(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(dialogMsg),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: RaisedButton(
+                        child: Text("Ok!"),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        }),
+                  )
+                ],
+              ),
+            ),
+          );
+        });
+  }).whenComplete(() {
+    toggleLoading();
+  });
 }

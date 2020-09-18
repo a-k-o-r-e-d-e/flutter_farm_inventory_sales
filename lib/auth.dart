@@ -18,9 +18,9 @@ abstract class BaseAuth {
 
   Future<void> resetPassword(String email);
 
-  Future signInWithGoogle();
+  Future<UserCredential> signInWithGoogle();
 
-  Future<User> get currentUserFuture;
+  User get currentUser;
 }
 
 class AuthFireBase extends ChangeNotifier implements BaseAuth {
@@ -29,18 +29,6 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
 
   AuthFireBase._internal() {
     _instance = this;
-    getCurrentUser();
-  }
-
-  User get currentUser => _currentUser;
-
-
-  Future<void> getCurrentUser() async {
-    _currentUser = await currentUserFuture;
-
-    _firebaseAuth.authStateChanges().listen((user) {
-      _currentUser = user;
-    });
   }
 
   factory AuthFireBase() => _instance ?? AuthFireBase._internal();
@@ -48,8 +36,8 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  User _currentUser;
-
+  @override
+  User get currentUser => _firebaseAuth.currentUser;
 
   @override
   Stream<User> get onAuthStateChanged {
@@ -57,37 +45,22 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
   }
 
   @override
-  Future<String> signInWithGoogle() async {
+  Future<UserCredential> signInWithGoogle() async {
     final GoogleSignInAccount googleSignInAccount =
-    await _googleSignIn.signIn();
+        await _googleSignIn.signIn();
     final GoogleSignInAuthentication googleSignInAuthentication =
-    await googleSignInAccount.authentication;
+        await googleSignInAccount.authentication;
 
     final AuthCredential credential = GoogleAuthProvider.credential(
         idToken: googleSignInAuthentication.idToken,
         accessToken: googleSignInAuthentication.accessToken);
 
-    final UserCredential authResult =
-    await _firebaseAuth.signInWithCredential(credential);
-    final User user = authResult.user;
-
-    assert(!user.isAnonymous);
-    assert(await user.getIdToken() != null);
-
-    final User currentUser = await _firebaseAuth.currentUser;
-    assert(user.uid == currentUser.uid);
-
-    return 'signInWithGoogle succeeded: $user';
+    return _firebaseAuth.signInWithCredential(credential);
   }
 
   @override
   Future<UserCredential> signInWithEmailAndPassword(String email,
       String password) async {
-    // FirebaseUser user = (await _firebaseAuth.signInWithEmailAndPassword(
-    //     email: email, password: password)).user;
-    // print("User is Verified: ${user.isEmailVerified}");
-    // if (user.isEmailVerified) return user.uid;
-    // return null;
     return _firebaseAuth.signInWithEmailAndPassword(
         email: email, password: password);
   }
@@ -122,7 +95,5 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
     await _firebaseAuth.sendPasswordResetEmail(email: email);
   }
 
-  @override
-  Future<User> get currentUserFuture async =>
-      await _firebaseAuth.currentUser;
+
 }

@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'auth.dart';
 
 class DrawerUtil extends StatelessWidget {
+  AuthFireBase auth = AuthFireBase();
+
   @override
   Widget build(BuildContext context) {
-    BaseAuth auth = AuthFireBase();
     return Drawer(
       child: Column(
         children: <Widget>[
@@ -15,13 +16,13 @@ class DrawerUtil extends StatelessWidget {
               builder: (context, snapshot) {
                 return UserAccountsDrawerHeader(
                   accountName:
-                      Text("${snapshot.data?.displayName ?? 'loading'}"),
+                  Text("${snapshot.data?.displayName ?? 'loading'}"),
                   accountEmail: Text("${snapshot.data?.email ?? 'loading'}"),
                   currentAccountPicture: CircleAvatar(
                     backgroundColor:
-                        Theme.of(context).platform == TargetPlatform.iOS
-                            ? Colors.deepPurple
-                            : Colors.white,
+                    Theme.of(context).platform == TargetPlatform.iOS
+                        ? Colors.deepPurple
+                        : Colors.white,
                     child: Text(
                         "${snapshot.data?.displayName?.substring(0, 1)?.toUpperCase() ?? 'A'}"),
                   ),
@@ -57,7 +58,6 @@ class DrawerUtil extends StatelessWidget {
                         .primaryColor,),
                     onTap: () {
                       Navigator.pop(context);
-                      BaseAuth auth = AuthFireBase();
                       auth.signOut();
                     },
                   ),

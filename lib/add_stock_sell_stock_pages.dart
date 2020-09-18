@@ -3,8 +3,10 @@ import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_farm_inventory/auth.dart';
+import 'package:flutter_farm_inventory/update_products_page.dart';
 
 import 'util_functions.dart';
 
@@ -215,8 +217,9 @@ class _SellStockPageState extends State<SellStockPage> {
     FirebaseFirestore.instance.runTransaction((transaction) async {
       DocumentSnapshot freshSnap =
       await transaction.get(stockDocumentSnapshot.reference);
-      await transaction.update(freshSnap.reference,
-          {'quantity': stockDocumentSnapshot.data()['quantity'] - quantity});
+      transaction.update(freshSnap.reference, {
+            'quantity': stockDocumentSnapshot.data()['quantity'] - quantity
+          });
       salesCollection.add(salesMap);
     }).whenComplete(() =>
         showDialog(
@@ -556,11 +559,36 @@ Widget _buildAvailableStockCard(BuildContext context) {
                                 ),
                               );
                             }
+
                             return snapshot.data.docs.isEmpty
                                 ? Container(
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                        "No Farm Products Found In Database. Please Create A Product First before you continue"),
+                              alignment: Alignment.center,
+                              child: RichText(
+                                text: TextSpan(
+                                    text:
+                                    "No Farm Products Found In Database. Please you have to ",
+                                    style: DefaultTextStyle
+                                        .of(context)
+                                        .style,
+                                    children: <TextSpan>[
+                                      TextSpan(text: "create a product",
+                                          style: TextStyle(
+                                              decoration: TextDecoration
+                                                  .underline, color: Theme
+                                              .of(context)
+                                              .primaryColor),
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () {
+                                              Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          UpdateProductsPage()));
+                                            }),
+                                      TextSpan(
+                                          text: " first before you can continue")
+                                    ]),
+
+                              ),
                                   )
                                 : ListView.builder(
                                     shrinkWrap: true,
@@ -663,7 +691,7 @@ class _ProductsDropdownState extends State<ProductsDropdown> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            StreamBuilder(
+            StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance.collection('users')
                     .doc(auth.currentUser.uid)
                     .collection("inventory")
@@ -673,16 +701,15 @@ class _ProductsDropdownState extends State<ProductsDropdown> {
                     return Text("Loading....");
                   }
 
+
                   widget.products.clear();
-                  var itemLists = List<String>.generate(
-                      snapshot.data.docs.length, (int index) {
+
+                  snapshot.data.docs.forEach((element) {
                     widget.products.putIfAbsent(
-                        snapshot.data.docs[index].data()['productName'],
-                            () => snapshot.data.docs[index]);
-                    return snapshot.data.docs[index].data()['productName'];
+                        element.data()['productName'], () => element);
                   });
                   print("Keys: ${widget.products.keys}");
-//                  controller.add("Test");
+
                   return Expanded(
                     child: DropdownButtonFormField<String>(
                       decoration: InputDecoration(
@@ -696,13 +723,15 @@ class _ProductsDropdownState extends State<ProductsDropdown> {
                                         .of(context)
                                         .primaryColor),
                               ))),
-                      hint: Text(
+                      hint: widget.products.isEmpty
+                          ? Text("No Products found ")
+                          : Text(
                         "Select Item",
                       ),
                       value: widget.selectedItem,
                       elevation: 5,
                       items: widget.products.keys.map((String value) {
-                        print(itemLists);
+                        // print(itemLists);
                         return DropdownMenuItem(
                             value: value, child: Text(value));
                       }).toList(),
