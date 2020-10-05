@@ -12,6 +12,7 @@ import 'login_signup_pages.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  // initializeDateFormatting();
   runApp(MyApp());
 }
 
@@ -115,19 +116,12 @@ class _CheckAuthState extends State<CheckAuth> {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final bool isLoggedIn = snapshot.hasData;
-//            if (Navigator.of(context).canPop()) Navigator.of(context).pop();
             print("isLoggedIn: $isLoggedIn");
 
             return HomePage();
           } else {
             return LoginPage();
           }
-
-
-          // return Scaffold(
-          //     appBar: AppBar(),
-          //     body: Center(child: CircularProgressIndicator()));
-          // });
         });
   }
 }

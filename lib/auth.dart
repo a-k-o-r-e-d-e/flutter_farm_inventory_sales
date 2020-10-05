@@ -66,8 +66,8 @@ class AuthFireBase extends ChangeNotifier implements BaseAuth {
   }
 
   @override
-  signOut() {
-    _firebaseAuth.signOut();
+  Future<void> signOut() {
+    return _firebaseAuth.signOut();
   }
 
   @override

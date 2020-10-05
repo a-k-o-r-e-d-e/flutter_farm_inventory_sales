@@ -5,11 +5,12 @@ submitForm(BuildContext context, GlobalKey<FormState> formKey,
     Function performAction) async {
   final form = formKey.currentState;
 
-  if (form.validate()) {
-    form.save();
+  FocusManager.instance.primaryFocus.unfocus();
 
-    await checkInternetConnection(context, performAction)
-        .whenComplete(() => formKey.currentState.reset());
+  if (form.validate()) {
+    // form.save();
+
+    await checkInternetConnection(context, performAction);
   }
 }
 
@@ -41,4 +42,36 @@ Future checkInternetConnection(
           );
         });
   }
+}
+
+showMyDialog(BuildContext context, String message, String btnText,
+    GlobalKey<FormState> formKey) {
+  return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          actions: [
+            RaisedButton(
+                child: Text("HomePage"),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                }),
+            RaisedButton(
+                child: Text(btnText),
+                onPressed: () {
+                  Navigator.pop(context);
+                  formKey.currentState.reset();
+                })
+          ],
+          content: Container(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(message),
+              ],
+            ),
+          ),
+        );
+      });
 }

@@ -24,6 +24,11 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
         appBar: AppBar(),
         drawer: DrawerUtil(),
+        floatingActionButton: FloatingActionButton(
+            backgroundColor: Theme.of(context).primaryColor,
+            child: Icon(Icons.add_circle_outline),
+            onPressed: () => Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => UpdateProductsPage()))),
         body: ConnectivityWidgetWrapper(
           decoration: BoxDecoration(
               color: Colors.purple,
@@ -78,16 +83,15 @@ class _HomePageState extends State<HomePage> {
                               i++) {
                                 DocumentSnapshot documentSnap =
                                 snapshot.data.docs[i];
-                                Timestamp dateStamp = documentSnap
-                                    .data()['dateTime'];
+                                Timestamp dateStamp =
+                                documentSnap.data()['dateTime'];
 //                                print(dateStamp);
                                 DateTime date = dateStamp.toDate();
 
                                 salesList
                                     .add(snapshot.data.docs[i].data()['price']);
                                 if (date.year == currentDate.year) {
-                                  yearlySalesList
-                                      .add(
+                                  yearlySalesList.add(
                                       snapshot.data.docs[i].data()['price']);
 
                                   if (date.month == currentDate.month) {
@@ -95,9 +99,8 @@ class _HomePageState extends State<HomePage> {
                                         snapshot.data.docs[i].data()['price']);
 
                                     if (date.day == currentDate.day) {
-                                      dailySalesList.add(
-                                          snapshot.data.docs[i]
-                                              .data()['price']);
+                                      dailySalesList.add(snapshot.data.docs[i]
+                                          .data()['price']);
                                     }
                                   }
                                 }
@@ -155,16 +158,14 @@ class _HomePageState extends State<HomePage> {
                                             Divider(),
                                             Padding(
                                               padding:
-                                              const EdgeInsets.all(
-                                                  4.0),
+                                              const EdgeInsets.all(4.0),
                                               child: Row(
                                                 children: <Widget>[
                                                   Expanded(
 //                                            flex: 2,
                                                     child: Padding(
                                                       padding:
-                                                      const EdgeInsets
-                                                          .only(
+                                                      const EdgeInsets.only(
                                                           left: 4),
                                                       child: Text("Date",
                                                           style: TextStyle(
@@ -180,8 +181,7 @@ class _HomePageState extends State<HomePage> {
                                                   Expanded(
                                                     child: Padding(
                                                       padding:
-                                                      const EdgeInsets
-                                                          .only(
+                                                      const EdgeInsets.only(
                                                           left: 4.0),
                                                       child: Text("Time",
                                                           style: TextStyle(
@@ -208,10 +208,8 @@ class _HomePageState extends State<HomePage> {
                                                   ),
                                                   Expanded(
                                                     child: Container(
-                                                        margin:
-                                                        const EdgeInsets
-                                                            .only(
-                                                            left: 4),
+                                                        margin: const EdgeInsets
+                                                            .only(left: 4),
                                                         child: Text('Qty',
                                                             style: TextStyle(
                                                                 color: Theme
@@ -251,78 +249,84 @@ class _HomePageState extends State<HomePage> {
                                                     itemBuilder:
                                                         (context, index) {
                                                       DocumentSnapshot
-                                                          documentSnap =
-                                                          snapshot
-                                                              .data.docs[index];
+                                                      documentSnap =
+                                                      snapshot
+                                                          .data.docs[index];
                                                       Timestamp dateStamp =
-                                                          documentSnap.data()[
-                                                              'dateTime'];
+                                                      documentSnap.data()[
+                                                      'dateTime'];
 //                                print(dateStamp);
                                                       DateTime date =
-                                                dateStamp.toDate();
-                                                String formattedDate =
-                                                DateFormat('dd-MMM-yy')
-                                                    .format(date);
-                                                String formattedTime =
-                                                DateFormat('kk:mm')
-                                                    .format(date);
+                                                      dateStamp.toDate();
+                                                      String formattedDate =
+                                                      DateFormat(
+                                                          'dd-MMM-yy')
+                                                          .format(date);
+                                                      String formattedTime =
+                                                      DateFormat('kk:mm')
+                                                          .format(date);
 
-                                                return Card(
-                                                  elevation: 1,
-                                                  child: Padding(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 4.0,
-                                                        vertical: 6),
-                                                    child: Row(
-                                                      children: <Widget>[
-                                                        Flexible(
-                                                          // flex: 2,
-                                                          child: Text(
-                                                              formattedDate),
-                                                        ),
-                                                        Expanded(
-                                                          child: Container(
-                                                            margin:
-                                                            const EdgeInsets
-                                                                .only(
-                                                                left: 6.0),
-                                                            child: Text(
-                                                                formattedTime),
-                                                          ),
-                                                        ),
-                                                        Expanded(
+                                                      return Card(
+                                                        elevation: 1,
+                                                        child: Padding(
+                                                          padding:
+                                                          const EdgeInsets
+                                                              .symmetric(
+                                                              horizontal:
+                                                              4.0,
+                                                              vertical: 6),
+                                                          child: Row(
+                                                            children: <Widget>[
+                                                              Flexible(
+                                                                // flex: 2,
+                                                                child: Text(
+                                                                    formattedDate),
+                                                              ),
+                                                              Expanded(
+                                                                child:
+                                                                Container(
+                                                                  margin: const EdgeInsets
+                                                                      .only(
+                                                                      left:
+                                                                      6.0),
+                                                                  child: Text(
+                                                                      formattedTime),
+                                                                ),
+                                                              ),
+                                                              Expanded(
 //                                            flex: 2,
-                                                          child: Text(
-                                                            documentSnap.data()[
-                                                            'productName'],
+                                                                child: Text(
+                                                                  documentSnap
+                                                                      .data()[
+                                                                  'productName'],
+                                                                ),
+                                                              ),
+                                                              Expanded(
+                                                                child:
+                                                                Container(
+                                                                  margin: const EdgeInsets
+                                                                      .only(
+                                                                      left:
+                                                                      8.0),
+                                                                  child: Text(
+                                                                      documentSnap
+                                                                          .data()[
+                                                                      'quantity']
+                                                                          .toString()),
+                                                                ),
+                                                              ),
+                                                              Expanded(
+                                                                child: Text(
+                                                                    documentSnap
+                                                                        .data()[
+                                                                    'price']
+                                                                        .toString()),
+                                                              )
+                                                            ],
                                                           ),
                                                         ),
-                                                        Expanded(
-                                                          child: Container(
-                                                            margin:
-                                                            const EdgeInsets
-                                                                .only(
-                                                                left: 8.0),
-                                                            child: Text(
-                                                                documentSnap
-                                                                    .data()[
-                                                                'quantity']
-                                                                    .toString()),
-                                                          ),
-                                                        ),
-                                                        Expanded(
-                                                          child: Text(
-                                                              documentSnap
-                                                                  .data()[
-                                                              'price']
-                                                                  .toString()),
-                                                        )
-                                                      ],
-                                                    ),
-                                                  ),
-                                                );
-                                              },
+                                                      );
+                                                    },
                                             ),
                                           ],
                                         ),
@@ -455,16 +459,16 @@ class _HomePageState extends State<HomePage> {
                                                       duration: Duration(
                                                           milliseconds: 500),
                                                       curve:
-                                                          Curves.bounceInOut);
-                                                }
-                                          // color: Colors.white,
-                                          // button is grey and disabled if we on the last page
-                                          // color: currentPage == (options.length-1) ? Colors.grey : Theme.of(context).primaryColor,
-                                          // onPressed: currentPage == (options.length-1) ? null : () {
-                                          //   print("Front Clicked");
-                                          //   moveToPage(pageIndex: ++currentPage);
-                                          // },
-                                          ),
+                                                      Curves.bounceInOut);
+                                          }
+                                        // color: Colors.white,
+                                        // button is grey and disabled if we on the last page
+                                        // color: currentPage == (options.length-1) ? Colors.grey : Theme.of(context).primaryColor,
+                                        // onPressed: currentPage == (options.length-1) ? null : () {
+                                        //   print("Front Clicked");
+                                        //   moveToPage(pageIndex: ++currentPage);
+                                        // },
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -474,126 +478,126 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-          Expanded(
-            child: Container(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: RaisedButton.icon(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(15.0),
-                                topRight: Radius.circular(15),
-                                bottomLeft: Radius.circular(15))),
-                        color: Theme
-                            .of(context)
-                            .accentColor,
-                        icon: Icon(Icons.book,
-                            color: Theme
-                                .of(context)
-                                .primaryColor),
-                        onPressed: () {
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) => RecordsPage()));
-                        },
-                        label: Text("Records"),
-                      ),
+                Expanded(
+                  child: Container(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(6.0),
+                            child: RaisedButton.icon(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(15.0),
+                                      topRight: Radius.circular(15),
+                                      bottomLeft: Radius.circular(15))),
+                              color: Theme
+                                  .of(context)
+                                  .accentColor,
+                              icon: Icon(Icons.book,
+                                  color: Theme
+                                      .of(context)
+                                      .primaryColor),
+                              onPressed: () {
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (context) => RecordsPage()));
+                              },
+                              label: Text("Records"),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(6.0),
+                            child: RaisedButton.icon(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(15.0),
+                                        topRight: Radius.circular(15),
+                                        bottomRight: Radius.circular(15))),
+                                color: Colors.teal[100],
+                                icon: Icon(
+                                  Icons.business_center,
+                                  color: Theme
+                                      .of(context)
+                                      .primaryColor,
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (context) =>
+                                          UpdateProductsPage()));
+                                },
+                                label: Text("Update Products")),
+                          ),
+                        )
+                      ],
                     ),
                   ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: RaisedButton.icon(
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(15.0),
-                                  topRight: Radius.circular(15),
-                                  bottomRight: Radius.circular(15))),
-                          color: Colors.teal[100],
-                          icon: Icon(
-                            Icons.business_center,
-                            color: Theme
-                                .of(context)
-                                .primaryColor,
+                ),
+                Expanded(
+                  child: Container(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(6.0),
+                            child: RaisedButton.icon(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(15.0),
+                                      bottomRight: Radius.circular(15),
+                                      bottomLeft: Radius.circular(15))),
+                              color: Theme
+                                  .of(context)
+                                  .accentColor,
+                              icon: Icon(
+                                Icons.shopping_cart,
+                                color: Theme
+                                    .of(context)
+                                    .primaryColor,
+                              ),
+                              onPressed: () {
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (context) => SellStockPage()));
+                              },
+                              label: Text("Sell"),
+                            ),
                           ),
-                          onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => UpdateProductsPage()));
-                          },
-                          label: Text("Update Products")),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: RaisedButton.icon(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(15.0),
-                                bottomRight: Radius.circular(15),
-                                bottomLeft: Radius.circular(15))),
-                        color: Theme
-                            .of(context)
-                            .accentColor,
-                        icon: Icon(
-                          Icons.shopping_cart,
-                          color: Theme
-                              .of(context)
-                              .primaryColor,
                         ),
-                        onPressed: () {
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) => SellStockPage()));
-                        },
-                        label: Text("Sell"),
-                      ),
+                        Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(6.0),
+                              child: RaisedButton.icon(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.only(
+                                        topRight: Radius.circular(15.0),
+                                        bottomRight: Radius.circular(15),
+                                        bottomLeft: Radius.circular(15))),
+                                color: Theme
+                                    .of(context)
+                                    .accentColor,
+                                icon: Icon(
+                                  Icons.add_shopping_cart,
+                                  color: Theme
+                                      .of(context)
+                                      .primaryColor,
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (context) => AddStockPage()));
+                                },
+                                label: Text("Add Stock"),
+                              ),
+                            ))
+                      ],
                     ),
                   ),
-                  Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(6.0),
-                        child: RaisedButton.icon(
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.only(
-                                  topRight: Radius.circular(15.0),
-                                  bottomRight: Radius.circular(15),
-                                  bottomLeft: Radius.circular(15))),
-                          color: Theme
-                              .of(context)
-                              .accentColor,
-                          icon: Icon(
-                            Icons.add_shopping_cart,
-                            color: Theme
-                                .of(context)
-                                .primaryColor,
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => AddStockPage()));
-                          },
-                          label: Text("Add Stock"),
-                        ),
-                      ))
-                ],
-              ),
-            ),
-          ),
-          ]),
+                ),
+              ]),
         ));
   }
 }
-

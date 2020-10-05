@@ -17,48 +17,30 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final formKey = GlobalKey<FormState>();
+
+  TextEditingController _emailTextController = TextEditingController();
+  TextEditingController _passwordTextController = TextEditingController();
+
   String _email;
   String _password;
   bool _loading = false;
 
 // Internet Connectivity test and Form Validation should have been done already before calling this method
-  performNormalLogin() async {
+  performNormalLogin(BuildContext context) async {
     toggleLoading();
 
-    await _baseAuth.signInWithEmailAndPassword(_email, _password).then((
-        response) {
-      // response.user.reload();
-      //
-      // if (!response.user.emailVerified) {
-      //   showDialog(
-      //       context: context,
-      //       builder: (BuildContext context) {
-      //         return AlertDialog(
-      //           content: Container(
-      //             child: Column(
-      //               mainAxisSize: MainAxisSize.min,
-      //               children: <Widget>[
-      //                 Text("Please verify account first"),
-      //                 Padding(
-      //                   padding: const EdgeInsets.all(8.0),
-      //                   child: RaisedButton(
-      //                       child: Text("Ok!"),
-      //                       onPressed: () {
-      //                         Navigator.pop(context);
-      //                       }),
-      //                 )
-      //               ],
-      //             ),
-      //           ),
-      //         );
-      //       });
-      // }
+    _email = _emailTextController.text;
+    _password = _passwordTextController.text;
+
+    await _baseAuth
+        .signInWithEmailAndPassword(_email, _password)
+        .then((response) {
       checkUserVerification(response.user, context);
     }).catchError((error) {
       String errorMsg;
       print("Error: ${error.runtimeType}");
       switch (error.code) {
-      //TODO:: Handle Wrong Password case
+        //TODO:: Handle Wrong Password case
 
         case "wrong-password":
           errorMsg = "Your password is wrong.";
@@ -117,8 +99,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-
-  Widget _loginForm() {
+  Widget _loginForm(BuildContext context) {
     return Scaffold(
       body: ConnectivityWidgetWrapper(
         decoration: BoxDecoration(
@@ -128,7 +109,8 @@ class _LoginPageState extends State<LoginPage> {
           opacity: 0.9,
           color: Colors.transparent,
           progressIndicator: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Theme
+            valueColor:
+            AlwaysStoppedAnimation<Color>(Theme
                 .of(context)
                 .primaryColor),
           ),
@@ -156,11 +138,13 @@ class _LoginPageState extends State<LoginPage> {
                                     icon: Icon(Icons.email),
                                     label: "Email",
                                     validator: emailValidator,
+                                    textController: _emailTextController,
                                     onSaved: (val) => _email = val,
                                     obscureText: false),
                                 CustomTextField(
                                     icon: Icon(Icons.lock),
                                     label: "Password",
+                                    textController: _passwordTextController,
                                     validator: (val) =>
                                     val.length < 6
                                         ? "Password too short"
@@ -178,7 +162,9 @@ class _LoginPageState extends State<LoginPage> {
                                   label: Text("Log in"),
                                   onPressed: () {
                                     submitForm(
-                                        context, formKey, performNormalLogin);
+                                        context, formKey, () {
+                                      performNormalLogin(context);
+                                    });
                                   },
                                 ),
                                 _googleSignInButton(context, toggleLoading),
@@ -221,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return _loginForm();
+    return _loginForm(context);
   }
 }
 
@@ -233,6 +219,8 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController _passwordTextController = TextEditingController();
+  final TextEditingController _emailTextController = TextEditingController();
+  final TextEditingController _nameTextController = TextEditingController();
   bool _loading = false;
 
   String _email;
@@ -252,45 +240,55 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   // Internet Connectivity test and Form Validation should have been done already before calling this method
-  performSignUp() async {
+  performSignUp(BuildContext context) async {
     toggleLoading();
 
+    _fullName = _nameTextController.text;
+    _email = _emailTextController.text;
+    _password = _passwordTextController.text;
+
+    print("Email Entered: $_email");
+    print("Password: $_password");
 
     await _baseAuth
         .signUpWithEmailAndPassword(_fullName, _email, _password)
-        .then((value) {
-      _baseAuth.signOut();
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text("Success!"),
-              content: Container(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(
-                        "User Successfully Created. Please Check your email for verification mail"),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: RaisedButton(
-                          child: Text("Ok!"),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(builder: (context) {
-                                  return CheckAuth();
-                                }));
-                          }),
-                    )
-                  ],
+        .then((userCred) {
+      _baseAuth.signOut().then((value) {
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text("Success!"),
+                content: Container(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                          "User Successfully Created. Please Check your email for verification mail"),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: RaisedButton(
+                            child: Text("Ok!"),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(builder: (context) {
+                                    return CheckAuth();
+                                  }));
+                            }),
+                      )
+                    ],
+                  ),
                 ),
-              ),
-            );
-          });
+              );
+            });
+      });
     }).catchError((error) {
       print("Error: ${error.code}");
       print("Error Type: ${error.runtimeType}");
+      print(error.message);
+      print("Email Used : ${error.email}");
+
 
       String dialogMsg;
 
@@ -349,7 +347,8 @@ class _SignUpPageState extends State<SignUpPage> {
           opacity: 0.9,
           color: Colors.transparent,
           progressIndicator: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Theme
+            valueColor:
+            AlwaysStoppedAnimation<Color>(Theme
                 .of(context)
                 .primaryColor),
           ),
@@ -369,12 +368,13 @@ class _SignUpPageState extends State<SignUpPage> {
                           child: Form(
                               key: formKey,
                               child: Column(
-                                mainAxisAlignment: MainAxisAlignment
-                                    .spaceEvenly,
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceEvenly,
                                 children: <Widget>[
                                   CustomTextField(
                                       icon: Icon(Icons.person),
                                       label: "Full Name",
+                                      textController: _nameTextController,
                                       validator: (val) =>
                                       val.isEmpty
                                           ? 'Name Cannot be Empty'
@@ -385,6 +385,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                       icon: Icon(Icons.email),
                                       label: "Email",
                                       validator: emailValidator,
+                                      textController: _emailTextController,
                                       onSaved: (val) => _email = val,
                                       obscureText: false),
                                   CustomTextField(
@@ -408,7 +409,9 @@ class _SignUpPageState extends State<SignUpPage> {
                                   RaisedButton.icon(
                                     onPressed: () {
                                       submitForm(
-                                          context, formKey, performSignUp);
+                                          context, formKey, () {
+                                        performSignUp(context);
+                                      });
                                     },
                                     icon: Icon(
                                       Icons.person_add,
@@ -505,34 +508,68 @@ Widget _googleSignInButton(BuildContext context, Function toggleLoading) {
   );
 }
 
-void checkUserVerification(User user, BuildContext context) {
+void checkUserVerification(User user, BuildContext context) async {
   if (!user.emailVerified) {
     print("XXX: Point C");
 
-    _baseAuth.signOut();
     showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
+
+            title: Text("Unverified Email"),
+            actions: [
+              RaisedButton(
+                  child: Text("Log out"),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _baseAuth.signOut();
+                  }),
+              // RaisedButton(
+              //     child: Text("Verify Verification Status"),
+              //     onPressed: () async {
+              //       checkInternetConnection(context, () async {
+              //         await user.reload();
+              //         if (user.emailVerified) {
+              //           print("Verified");
+              //           Navigator.pop(context);
+              //         }
+              //       });
+              //
+              //     }),
+            ],
             content: Container(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  Text(
-                      "Unverified Email: Please Check your Mail for verification mail"),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: RaisedButton(
-                        child: Text("Ok!"),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        }),
-                  )
+                  RichText(text: TextSpan(
+                      text: "Please Check your Mail for verification mail. ",
+                      style: TextStyle(color: Colors.black),
+                      children: [
+                        TextSpan(
+                            text: "Click here ",
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                checkInternetConnection(context, () {
+                                  user.sendEmailVerification();
+                                });
+                              },
+                            style: TextStyle(color: Theme
+                                .of(context)
+                                .primaryColor)
+                        ),
+                        TextSpan(
+                            text: "to resend verification mail "
+                        )
+                      ]
+                  )),
                 ],
               ),
             ),
           );
         });
+
   }
 }
 
@@ -568,7 +605,6 @@ class CustomTextField extends StatefulWidget {
   final TextEditingController textController;
   bool _hideTxt;
 
-
   CustomTextField({this.icon,
     this.label,
     this.obscureText = false,
@@ -593,7 +629,6 @@ class _CustomTextFieldState extends State<CustomTextField> {
           obscureText: widget._hideTxt,
           controller: widget.textController,
           validator: widget.validator,
-//          autofocus: true,
           onSaved: widget.onSaved,
           style: TextStyle(fontSize: fontSize),
           decoration: InputDecoration(
@@ -617,17 +652,21 @@ class _CustomTextFieldState extends State<CustomTextField> {
                   width: 3,
                 ),
               ),
-              suffixIcon: widget.obscureText ? IconButton(
+              suffixIcon: widget.obscureText
+                  ? IconButton(
                 icon: Icon(
                   Icons.remove_red_eye,
-                  color: widget._hideTxt ? Theme
+                  color: widget._hideTxt
+                      ? Theme
                       .of(context)
-                      .primaryColor : Colors.grey,
+                      .primaryColor
+                      : Colors.grey,
                 ),
                 onPressed: () {
                   setState(() => widget._hideTxt = !widget._hideTxt);
                 },
-              ) : null,
+              )
+                  : null,
               prefixIcon: Padding(
                 padding: EdgeInsets.only(left: 30, right: 10),
                 child: IconTheme(
@@ -678,6 +717,7 @@ _performGoogleSignIn(BuildContext context, Function toggleLoading) {
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text("Error"),
+            actions: [],
             content: Container(
               child: Column(
                 mainAxisSize: MainAxisSize.min,

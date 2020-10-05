@@ -189,17 +189,25 @@ class RecordsPage extends StatelessWidget {
   }
 }
 
-class ProductHistory extends StatelessWidget {
+class ProductHistory extends StatefulWidget {
   final String productName;
 
   ProductHistory({this.productName});
 
   @override
+  _ProductHistoryState createState() => _ProductHistoryState();
+}
+
+class _ProductHistoryState extends State<ProductHistory> {
+  @override
   Widget build(BuildContext context) {
+    int totalQtySold = 0;
+    double totalSales = 0.0;
+
     return Scaffold(
       backgroundColor: Theme.of(context).accentColor,
       appBar: AppBar(
-        title: Text("$productName History"),
+        title: Text("${widget.productName} History"),
         actions: <Widget>[
           IconButton(
             icon: Icon(
@@ -216,10 +224,8 @@ class ProductHistory extends StatelessWidget {
       ),
       body: ConnectivityWidgetWrapper(
         decoration: BoxDecoration(
-            color: Colors.purple, gradient: LinearGradient(colors: [
-          Colors.red,
-          Colors.cyan
-        ])),
+            color: Colors.purple,
+            gradient: LinearGradient(colors: [Colors.red, Colors.cyan])),
         child: Column(
           children: <Widget>[
             Padding(
@@ -258,7 +264,7 @@ class ProductHistory extends StatelessWidget {
                       .collection('users')
                       .doc(auth.currentUser.uid)
                       .collection("farm_records")
-                      .where("productName", isEqualTo: productName)
+                      .where("productName", isEqualTo: widget.productName)
                       .orderBy("dateTime", descending: true)
                       .snapshots(),
                   builder: (context, snapshot) {
@@ -280,35 +286,38 @@ class ProductHistory extends StatelessWidget {
                         itemCount: snapshot.data.documents.length,
                         itemBuilder: (BuildContext buildContext, int index) {
                           DocumentSnapshot documentSnapshot =
-                          snapshot.data.documents[index];
-                          Timestamp dateStamp = documentSnapshot
-                              .data()['dateTime'];
+                              snapshot.data.documents[index];
+                          Timestamp dateStamp =
+                              documentSnapshot.data()['dateTime'];
                           DateTime date = dateStamp.toDate();
                           String formattedDate =
-                          DateFormat('dd-MMM-yy').format(date);
+                              DateFormat('dd-MMM-yy').format(date);
 
-                          String price = documentSnapshot.data()['price'] !=
-                              null
-                              ? documentSnapshot.data()['price'].toString()
-                              : "-";
+                          String price =
+                              documentSnapshot.data()['price'] != null
+                                  ? documentSnapshot.data()['price'].toString()
+                                  : "-";
 
-                          String quantity = documentSnapshot
-                              .data()['quantity'] != null
-                              ? documentSnapshot.data()['quantity'].toString()
-                              : "-";
+                          String quantity =
+                              documentSnapshot.data()['quantity'] != null
+                                  ? documentSnapshot
+                                      .data()['quantity']
+                                      .toString()
+                                  : "-";
 
                           Color quantityColor =
-                          documentSnapshot.data()['action'] == 'sale' &&
-                              documentSnapshot.data()['quantity'] != null
-                              ? Colors.red
-                              : Colors.green;
+                              documentSnapshot.data()['action'] == 'sale' &&
+                                      documentSnapshot.data()['quantity'] !=
+                                          null
+                                  ? Colors.red
+                                  : Colors.green;
 
                           return Card(
                             elevation: 1,
                             margin: EdgeInsets.symmetric(vertical: 6.0),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 15.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 15.0),
                               child: Row(
                                 children: <Widget>[
                                   Expanded(
@@ -320,8 +329,8 @@ class ProductHistory extends StatelessWidget {
                                   ),
                                   Expanded(
                                     flex: 3,
-                                    child: Text(
-                                        documentSnapshot.data()['action']),
+                                    child:
+                                        Text(documentSnapshot.data()['action']),
                                   ),
                                   Expanded(
                                     flex: 2,
@@ -334,9 +343,9 @@ class ProductHistory extends StatelessWidget {
                                     flex: 2,
                                     child: Container(
                                         child: Text(
-                                          price,
-                                          textAlign: TextAlign.center,
-                                        )),
+                                      price,
+                                      textAlign: TextAlign.center,
+                                    )),
                                   )
                                 ],
                               ),
@@ -344,6 +353,51 @@ class ProductHistory extends StatelessWidget {
                           );
                         });
                   }),
+            ),
+            Card(
+              color: Theme.of(context).primaryColor,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(auth.currentUser.uid)
+                        .collection("farm_records")
+                        .where("productName", isEqualTo: widget.productName)
+                        .where('action', isEqualTo: 'sale')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      int totalQtySold = 0;
+                      double totalSales = 0.0;
+
+                      if (snapshot.hasData) {
+                        snapshot.data.docs.forEach((element) {
+                          totalSales += element.data()['price'];
+
+                          totalQtySold += element.data()['quantity'];
+                        });
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(
+                              child: Text(
+                            "Total Quantity Sold: $totalQtySold",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          )),
+                          Expanded(
+                              child: Text(
+                            "Total Sales: $totalSales",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          )),
+                        ],
+                      );
+                    }),
+              ),
             )
           ],
         ),
@@ -356,9 +410,7 @@ class ConsolidatedSalesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme
-          .of(context)
-          .accentColor,
+      backgroundColor: Theme.of(context).accentColor,
       appBar: AppBar(
         title: Text("Sales History"),
         actions: <Widget>[
