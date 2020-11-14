@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_farm_inventory/auth.dart';
-import 'package:flutter_farm_inventory/update_products_page.dart';
+import 'package:flutter_farm_inventory/services/auth.dart';
+import 'package:flutter_farm_inventory/views/update_products_page.dart';
 import 'package:intl/intl.dart';
 
 import 'home_page.dart';
@@ -99,18 +99,17 @@ class RecordsPage extends StatelessWidget {
                     );
                   }
 
-                  return snapshot.data.docs.isEmpty ? Expanded(
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      alignment: Alignment.center,
-                      child: RichText(
-                        textAlign: TextAlign.center,
-                        text: TextSpan(
-                            text:
-                            "No Farm Products Found In Database. Please you have to ",
-                            style: DefaultTextStyle
-                                .of(context)
-                                .style,
+                  if (snapshot.data.docs.isEmpty) {
+                    return Expanded(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        alignment: Alignment.center,
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                              text:
+                                  "No Farm Products Found In Database. Please you have to ",
+                              style: DefaultTextStyle.of(context).style,
                             children: <TextSpan>[
                               TextSpan(text: "create a product",
                                   style: TextStyle(
@@ -128,59 +127,66 @@ class RecordsPage extends StatelessWidget {
                               TextSpan(text: " first before you can continue")
                             ]),
 
+                        ),
                       ),
-                    ),
-                  ) : ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: snapshot.data.documents.length,
-                      itemBuilder: (BuildContext buildContext, int index) {
-                        DocumentSnapshot documentSnapshot =
-                        snapshot.data.documents[index];
-                        return Card(
-                          // color: Theme.of(context).accentColor,
-                          elevation: 1,
-                          margin: EdgeInsets.symmetric(
-                              vertical: 6.0, horizontal: 8),
-                          child: InkWell(
-                            onTap: () {
-                              print(
-                                  "Tapped: ${documentSnapshot
-                                      .data()['productName']}");
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) =>
-                                      ProductHistory(
-                                        productName:
-                                        documentSnapshot.data()['productName'],
-                                      )));
-                            },
-                            splashColor: Colors.brown,
-                            child: Padding(
-                              padding: const EdgeInsets.all(18.0),
-                              child: Row(
-                                children: <Widget>[
-                                  Expanded(
-                                    flex: 1,
-                                    child: Text("${index + 1}"),
+                    );
+                  } else {
+                    return Expanded(
+                      child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: snapshot.data.documents.length,
+                          itemBuilder: (BuildContext buildContext, int index) {
+                            DocumentSnapshot documentSnapshot =
+                            snapshot.data.documents[index];
+                            return Card(
+                              // color: Theme.of(context).accentColor,
+                              elevation: 1,
+                              margin: EdgeInsets.symmetric(
+                                  vertical: 6.0, horizontal: 8),
+                              child: InkWell(
+                                onTap: () {
+                                  print(
+                                      "Tapped: ${documentSnapshot
+                                          .data()['productName']}");
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (context) =>
+                                          ProductHistory(
+                                            productName:
+                                            documentSnapshot
+                                                .data()['productName'],
+                                          )));
+                                },
+                                splashColor: Colors.brown,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(18.0),
+                                  child: Row(
+                                    children: <Widget>[
+                                      Expanded(
+                                        flex: 1,
+                                        child: Text("${index + 1}"),
+                                      ),
+                                      Expanded(
+                                        flex: 3,
+                                        child: Text(
+                                            documentSnapshot
+                                                .data()['productName']),
+                                      ),
+                                      Expanded(
+                                        flex: 3,
+                                        child: Text(
+                                          documentSnapshot.data()['quantity']
+                                              .toString()
+                                              .padLeft(5),
+                                        ),
+                                      )
+                                    ],
                                   ),
-                                  Expanded(
-                                    flex: 3,
-                                    child: Text(
-                                        documentSnapshot.data()['productName']),
-                                  ),
-                                  Expanded(
-                                    flex: 3,
-                                    child: Text(
-                                      documentSnapshot.data()['quantity']
-                                          .toString()
-                                          .padLeft(5),
-                                    ),
-                                  )
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
-                        );
-                      });
+                            );
+                          }),
+                    );
+                  }
                 })
           ],
         ),

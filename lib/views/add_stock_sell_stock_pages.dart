@@ -5,11 +5,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_farm_inventory/auth.dart';
-import 'package:flutter_farm_inventory/update_products_page.dart';
+import 'package:flutter_farm_inventory/services/auth.dart';
+import 'package:flutter_farm_inventory/views/update_products_page.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 
-import 'util_functions.dart';
+import '../util_functions.dart';
 
 var dropDownValue;
 StreamController<String> controller = StreamController<String>.broadcast();

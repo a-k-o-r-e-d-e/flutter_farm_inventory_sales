@@ -1,13 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_farm_inventory/services/auth.dart';
+import 'package:flutter_farm_inventory/views/update_products_page.dart';
 import 'package:intl/intl.dart';
 
 import 'add_stock_sell_stock_pages.dart';
-import 'auth.dart';
-import 'drawer_util.dart';
+import 'my_drawer.dart';
 import 'records_page.dart';
-import 'update_products_page.dart';
 
 class HomePage extends StatefulWidget {
   @override

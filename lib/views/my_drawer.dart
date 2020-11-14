@@ -1,10 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-import 'auth.dart';
+import 'package:flutter_farm_inventory/services/auth.dart';
 
 class DrawerUtil extends StatelessWidget {
-  AuthFireBase auth = AuthFireBase();
+  final AuthFireBase auth = AuthFireBase();
 
   @override
   Widget build(BuildContext context) {
