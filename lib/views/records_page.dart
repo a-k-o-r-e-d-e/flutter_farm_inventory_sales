@@ -79,7 +79,7 @@ class RecordsPage extends StatelessWidget {
                 ],
               ),
             ),
-            StreamBuilder(
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: FirebaseFirestore.instance
                     .collection('users')
                     .doc(auth.currentUser.uid)
@@ -134,10 +134,10 @@ class RecordsPage extends StatelessWidget {
                     return Expanded(
                       child: ListView.builder(
                           shrinkWrap: true,
-                          itemCount: snapshot.data.documents.length,
+                          itemCount: snapshot.data.docs.length,
                           itemBuilder: (BuildContext buildContext, int index) {
-                            DocumentSnapshot documentSnapshot =
-                            snapshot.data.documents[index];
+                            DocumentSnapshot<dynamic> documentSnapshot =
+                                snapshot.data.docs[index];
                             return Card(
                               // color: Theme.of(context).accentColor,
                               elevation: 1,
@@ -146,13 +146,10 @@ class RecordsPage extends StatelessWidget {
                               child: InkWell(
                                 onTap: () {
                                   print(
-                                      "Tapped: ${documentSnapshot
-                                          .data()['productName']}");
+                                      "Tapped: ${documentSnapshot.data()['productName']}");
                                   Navigator.of(context).push(MaterialPageRoute(
-                                      builder: (context) =>
-                                          ProductHistory(
-                                            productName:
-                                            documentSnapshot
+                                      builder: (context) => ProductHistory(
+                                            productName: documentSnapshot
                                                 .data()['productName'],
                                           )));
                                 },
@@ -265,7 +262,7 @@ class _ProductHistoryState extends State<ProductHistory> {
               ],
             ),
             Expanded(
-              child: StreamBuilder(
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: FirebaseFirestore.instance
                       .collection('users')
                       .doc(auth.currentUser.uid)
@@ -289,10 +286,10 @@ class _ProductHistoryState extends State<ProductHistory> {
 
                     return ListView.builder(
                         shrinkWrap: true,
-                        itemCount: snapshot.data.documents.length,
+                        itemCount: snapshot.data.docs.length,
                         itemBuilder: (BuildContext buildContext, int index) {
-                          DocumentSnapshot documentSnapshot =
-                              snapshot.data.documents[index];
+                          DocumentSnapshot<dynamic> documentSnapshot =
+                              snapshot.data.docs[index];
                           Timestamp dateStamp =
                               documentSnapshot.data()['dateTime'];
                           DateTime date = dateStamp.toDate();
@@ -364,7 +361,7 @@ class _ProductHistoryState extends State<ProductHistory> {
               color: Theme.of(context).primaryColor,
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: StreamBuilder<QuerySnapshot>(
+                child: StreamBuilder<QuerySnapshot<dynamic>>(
                     stream: FirebaseFirestore.instance
                         .collection('users')
                         .doc(auth.currentUser.uid)
@@ -502,20 +499,20 @@ class ConsolidatedSalesPage extends StatelessWidget {
                         shrinkWrap: true,
                         itemCount: snapshot.data.documents.length,
                         itemBuilder: (BuildContext buildContext, int index) {
-                          DocumentSnapshot documentSnapshot =
-                          snapshot.data.documents[index];
-                          Timestamp dateStamp = documentSnapshot
-                              .data()['dateTime'];
-                          DateTime date = dateStamp.toDate();
-                          String formattedDate =
-                          DateFormat('dd-MMM-yy').format(date);
+                              DocumentSnapshot<dynamic> documentSnapshot =
+                                  snapshot.data.documents[index];
+                              Timestamp dateStamp =
+                                  documentSnapshot.data()['dateTime'];
+                              DateTime date = dateStamp.toDate();
+                              String formattedDate =
+                                  DateFormat('dd-MMM-yy').format(date);
 
-                          String price = documentSnapshot.data()['price'] !=
-                              null
-                              ? documentSnapshot.data()['price'].toString()
-                              : "-";
+                              String price = documentSnapshot.data()['price'] !=
+                                      null
+                                  ? documentSnapshot.data()['price'].toString()
+                                  : "-";
 
-                          Color quantityColor =
+                              Color quantityColor =
                           documentSnapshot.data()['action'] == 'sale'
                               ? Colors.red
                               : Colors.green;

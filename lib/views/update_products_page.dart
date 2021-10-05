@@ -4,9 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_farm_inventory/util_functions.dart';
+import 'package:flutter_farm_inventory/views/add_stock_sell_stock_pages.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
-
-import 'file:///C:/Users/Lone%20Wolf/AndroidStudioProjects/flutter_farm_inventory/lib/views/add_stock_sell_stock_pages.dart';
 
 class UpdateProductsPage extends StatefulWidget {
   @override

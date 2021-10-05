@@ -24,7 +24,7 @@ class AddStockPage extends StatefulWidget {
 class _AddStockPageState extends State<AddStockPage> {
   TextEditingController _quantityTextController = TextEditingController();
   final formKey = GlobalKey<FormState>();
-  Map<String, DocumentSnapshot> documents = HashMap();
+  Map<String, DocumentSnapshot<dynamic>> documents = HashMap();
 
   bool _loading = false;
 
@@ -164,7 +164,7 @@ class _SellStockPageState extends State<SellStockPage> {
   var netPriceTxt;
   bool _loading = false;
 
-  Map<String, DocumentSnapshot> products = HashMap();
+  Map<String, DocumentSnapshot<dynamic>> products = HashMap();
 
   Stream stream;
 
@@ -423,7 +423,8 @@ class _SellStockPageState extends State<SellStockPage> {
 }
 
 
-Widget _buildListItem(BuildContext context, DocumentSnapshot documentSnapshot) {
+Widget _buildListItem(
+    BuildContext context, DocumentSnapshot<dynamic> documentSnapshot) {
   return Material(
     child: ListTile(
       title: Row(
@@ -431,13 +432,10 @@ Widget _buildListItem(BuildContext context, DocumentSnapshot documentSnapshot) {
           Expanded(
             child: Text(
               documentSnapshot.data()['productName'],
-              style: Theme
-                  .of(context)
+              style: Theme.of(context)
                   .textTheme
                   .headline5
-                  .copyWith(color: Theme
-                  .of(context)
-                  .primaryColor),
+                  .copyWith(color: Theme.of(context).primaryColor),
             ),
           ),
           Container(
@@ -636,14 +634,13 @@ Widget buildButton({BuildContext context,
 
 
 class ProductsDropdown extends StatefulWidget {
-  Map<String, DocumentSnapshot> products;
+  Map<String, DocumentSnapshot<dynamic>> products;
   String selectedItem;
 
   ProductsDropdown({this.products});
 
   @override
   _ProductsDropdownState createState() => _ProductsDropdownState();
-
 }
 
 class _ProductsDropdownState extends State<ProductsDropdown> {
@@ -657,8 +654,9 @@ class _ProductsDropdownState extends State<ProductsDropdown> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('users')
+            StreamBuilder<QuerySnapshot<dynamic>>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
                     .doc(auth.currentUser.uid)
                     .collection("inventory")
                     .snapshots(),

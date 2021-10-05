@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> {
                       elevation: 8,
                       child: Container(
                         height: 260,
-                        child: StreamBuilder(
+                        child: StreamBuilder<dynamic>(
                             stream: FirebaseFirestore.instance
                                 .collection('users')
                                 .doc(auth.currentUser.uid)
@@ -81,10 +81,10 @@ class _HomePageState extends State<HomePage> {
                               for (int i = 0;
                               i < snapshot.data.docs.length;
                               i++) {
-                                DocumentSnapshot documentSnap =
-                                snapshot.data.docs[i];
+                                DocumentSnapshot<dynamic> documentSnap =
+                                    snapshot.data.docs[i];
                                 Timestamp dateStamp =
-                                documentSnap.data()['dateTime'];
+                                    documentSnap.data()['dateTime'];
 //                                print(dateStamp);
                                 DateTime date = dateStamp.toDate();
 
@@ -248,19 +248,19 @@ class _HomePageState extends State<HomePage> {
                                                         .data.docs.length,
                                                     itemBuilder:
                                                         (context, index) {
-                                                      DocumentSnapshot
-                                                      documentSnap =
-                                                      snapshot
-                                                          .data.docs[index];
+                                                      DocumentSnapshot<dynamic>
+                                                          documentSnap =
+                                                          snapshot
+                                                              .data.docs[index];
                                                       Timestamp dateStamp =
-                                                      documentSnap.data()[
-                                                      'dateTime'];
+                                                          documentSnap.data()[
+                                                              'dateTime'];
 //                                print(dateStamp);
                                                       DateTime date =
-                                                      dateStamp.toDate();
+                                                          dateStamp.toDate();
                                                       String formattedDate =
-                                                      DateFormat(
-                                                          'dd-MMM-yy')
+                                                          DateFormat(
+                                                                  'dd-MMM-yy')
                                                           .format(date);
                                                       String formattedTime =
                                                       DateFormat('kk:mm')
